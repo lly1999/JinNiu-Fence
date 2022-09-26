@@ -2,8 +2,7 @@
 
     <div class="container" style="margin-top: 20px;">
         <div class="row center-block">
-            <div class="col-1"></div>
-            <div class="col-10">
+            <div class="col-12">
                 <div class="card">
 
                     <div class="card-header">
@@ -19,17 +18,6 @@
                                             aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body">
-                                        <!-- <div class="mb-3">
-                                            <label for="add-bot-title" class="form-label">Bot名称
-                                            </label>
-                                            <input type="text" class="form-control" id="add-bot-title"
-                                                placeholder="请输入bot名称">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="add-bot-description" class="form-label">Bot简介</label>
-                                            <textarea class="form-control" id="add-bot-description" rows="3"
-                                                placeholder="请输入bot简介"></textarea>
-                                        </div> -->
                                         <el-form :rules="rules" ref="ruleFormRef" :model="form" label-width="120px"
                                             style="max-width: 500px">
                                             <el-form-item label="id" width="100px">
@@ -100,58 +88,41 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <el-table :data="personel" style="width: 100%">
+                        <el-table :data="personel" style="width: 100%" size="middle">
                             <el-table-column prop="id" label="id" width="150" />
                             <el-table-column prop="name" label="姓名" width="120" />
-                            <el-table-column prop="phone" label="电话" width="120" />
+                            <el-table-column prop="phone" label="电话" width="140" />
                             <el-table-column prop="wechat" label="微信" width="200" />
                             <el-table-column prop="office" label="职务" width="120" />
                             <el-table-column prop="fenchId" label="所处围栏" width="120" />
                             <el-table-column prop="street" label="所处街道" width="200" />
-                            <el-table-column fixed="right" label="操作" width="120">
-                                <template #default>
-                                    <el-button link type="primary" size="small" @click="handleClick">Detail</el-button>
-                                    <el-button link type="primary" size="small">Edit</el-button>
+                            <el-table-column fixed="right" label="操作" width="280">
+                                <template #default="scope">
+                                    <el-button class="allocateFench" link size="small" type="primary" plain text
+                                        style="font-size:14px; " @click="allocateFence(scope.$index)">
+                                        分配围栏
+                                    </el-button>
+                                    <!-- <el-button
+                                        
+          size="mini"
+          type="primary"
+          @click.prevent="editFence(scope.$index)" plain text style="font-size:20px">设置状态</el-button>
+      -->
+                                    <el-button link size="small" type="primary" plain text style="font-size:20px">
+                                        <el-icon style="vertical-align: middle">
+                                            <PhoneFilled />
+                                        </el-icon>
+                                    </el-button>
+                                    <el-button size="small" type="primary" plain text style="font-size:12px">
+                                        <el-image class="logo-icon" :src="require('@/assets/img/wx_icon.png')"
+                                            :size="35"></el-image>
+                                    </el-button>
+                                    <el-button link size="small" type="danger" plain text style="font-size:14px">删除
+                                    </el-button>
                                 </template>
                             </el-table-column>
                         </el-table>
 
-
-
-                        <!-- <table class="table table-hover">
-                            <thead>
-                                <tr>
-
-                                    <th>id</th>
-                                    <th>姓名</th>
-                                    <th>电话</th>
-                                    <th>微信</th>
-                                    <th>职务</th>
-                                    <th>所在围栏id</th>
-                                    <th>所在街道</th>
-                                    <th>操作</th>
-                                </tr>
-
-                            </thead>
-
-                            <tbody>
-                                <tr v-for="person in personel" :key="person.id">
-                                    <td>{{person.id}}</td>
-                                    <td>{{person.name}}</td>
-                                    <td>{{person.phone}}</td>
-                                    <td>{{person.wechat}}</td>
-                                    <td>{{person.office}}</td>
-                                    <td>{{person.fenchId}}</td>
-                                    <td>{{person.street}}</td>
-                                    <td>
-                                        <button type="button" class="btn btn-light">创建围栏</button>
-                                        <button type="button" class="btn btn-outline-danger"
-                                            style="margin-left: 5px;">删除</button>
-                                    </td>
-                                </tr>
-
-                            </tbody>
-                        </table> -->
                     </div>
                 </div>
             </div>
@@ -159,16 +130,43 @@
 
     </div>
 
+    <el-dialog v-model="dialogFormVisible" title="分配围栏">
+        <template #default>
+            <template v-for="tableItem in tableDataFence" :key="tableItem.id">
+                <el-table :data="tableItem.data" class="table" :fit="false" max-height="300px">
+                    <el-table-column type="selection" width="55" />
+                    <el-table-column v-for="i in tableItem.headerNames.length-2" :label="tableItem.headerNames[i - 1]"
+                        :key="i" :prop="tableItem.dataNames[i - 1]" width="200" />
+
+                </el-table>
+            </template>
+        </template>
+        <template #footer>
+            <span class="dialog-footer">
+                <el-button @click="dialogFormVisible = false">取消</el-button>
+                <el-button type="primary" @click="dialogFormVisible = false">将人员分配到选中围栏</el-button>
+            </span>
+        </template>
+    </el-dialog>
+
 </template>
 
 <script>
-import { reactive } from 'vue'
+import { reactive } from 'vue';
+import { ref } from 'vue';
+import { PhoneFilled } from "@element-plus/icons-vue";
+
 export default {
     setup() {
+        const dialogFormVisible = ref(false)
         const personel = [
             { id: 1, name: "张三", phone: 15617681182, wechat: "myWechat123", office: "大队长", fenchId: 1, street: "抚琴街道" },
             { id: 2, name: "李四", phone: 15617681182, wechat: "myWechat4659876216", office: "队员", fenchId: 2, street: "抚琴街道" },
             { id: 3, name: "王五", phone: 15617681182, wechat: "myWechat123", office: "队员", fenchId: 3, street: "抚琴街道" },
+        ];
+
+        const tableDataFence = [
+
         ]
 
         const rules = reactive({
@@ -218,20 +216,41 @@ export default {
             location: (location_default[Math.floor(Math.random() * 48)]).toString()
         })
 
+        function allocateFence(index) {
+            dialogFormVisible.value = true
+            let person = personel.value[0].data
+            console.log(person[index].id)
+        }
+
+
         const handleClick = () => {
             console.log('click')
         }
 
         return {
-            personel,
+
+            allocateFence,
             handleClick,
             rules,
-            form
+            form,
+            personel,
+            dialogFormVisible,
+            tableDataFence
         }
+    },
+    components: {
+        PhoneFilled
     }
 }
 </script>
 
 <style scoped>
+.allocateFench:hover {
+    color: #A0D8FF;
+}
 
+.allocateFench,
+.allocateFench:focus:not(.allocateFench:hover) {
+    color: #409EFF;
+}
 </style>
