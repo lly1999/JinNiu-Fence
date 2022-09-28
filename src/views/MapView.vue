@@ -254,8 +254,8 @@ export default {
   
 <style scoped>
 .map {
-    width: 100%;
-    height: 780px;
+    width: 100vw;
+    height: 100vh;
 }
 
 .ol-popup {

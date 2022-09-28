@@ -18,15 +18,22 @@ export default {
 </script>
 
 <style>
-/* #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+#app {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
-nav {
+/* nav {
+  position: absolute;
+  z-index: 5;
+  width: 100vw;
+  padding: 0;
+  margin: 0;
+} */
+
+/* nav {
   padding: 30px;
 }
 

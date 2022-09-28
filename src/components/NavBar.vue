@@ -81,4 +81,11 @@ img.navbar-icon {
     width: 4vh;
     border-radius: 50%;
 }
+
+nav {
+    position: absolute;
+    z-index: 5;
+    width: 100vw;
+    margin: 0;
+}
 </style>
