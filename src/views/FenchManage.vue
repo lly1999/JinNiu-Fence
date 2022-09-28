@@ -1,14 +1,18 @@
 <template>
     <div>
-        <button type="button" class="btn btn-outline-secondary" @click="createMarker()">创建围栏/取消创建</button>
-        <button v-if="!exitEditAble" type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-            data-bs-target="#edit-fench">编辑围栏/取消编辑</button>
-        <button v-else type="button" class="btn btn-outline-secondary" @click="exitEdit()">编辑围栏/取消编辑</button>
-        <!-- <button v-else type="button" class="btn btn-outline-secondary">退出编辑</button> -->
+        <div class="buttonBox">
+            <button type="button" class="btn btn-primary" @click="createMarker()">创建围栏/取消创建</button>
+            <button v-if="!exitEditAble" type="button" class="btn btn-primary" data-bs-toggle="modal"
+                data-bs-target="#edit-fench" style="margin-left:10px">编辑围栏/取消编辑</button>
+            <button v-else type="button" class="btn btn-primary" @click="exitEdit()"
+                style="margin-left:10px">编辑围栏/取消编辑</button>
+            <!-- <button v-else type="button" class="btn btn-outline-secondary">退出编辑</button> -->
 
-        <button v-if="confirmOperation" type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-            data-bs-target="#add-fench">确认创建/编辑</button>
-        <button v-else type="button" class="btn btn-outline-secondary">确认创建/编辑</button>
+            <button v-if="confirmOperation" type="button" class="btn btn-primary" data-bs-toggle="modal"
+                data-bs-target="#add-fench" style="margin-left:10px">确认创建/编辑</button>
+            <button v-else type="button" class="btn btn-primary" style="margin-left:10px">确认创建/编辑</button>
+
+        </div>
 
 
         <div class="modal fade" id="edit-fench" tabindex="-1" aria-hidden="true">
@@ -36,8 +40,13 @@
                                     <td>{{value.operator}}</td>
                                     <td>{{value.editTime}}</td>
                                     <td>
-                                        <el-button class="editFench" link size="small" type="primary" plain text
-                                            style="font-size:14px; " @click="inEditFence(value.id)">
+                                        <el-button v-if="!confirmOperation" class="editFench" link size="small"
+                                            type="primary" plain text style="font-size:14px; "
+                                            @click="inEditFence(value.id)">
+                                            编辑围栏
+                                        </el-button>
+                                        <el-button v-else class="editFenceNone" link size="small" type="primary" plain
+                                            text style="font-size:14px; ">
                                             编辑围栏
                                         </el-button>
                                         <el-button link size="small" type="danger" plain text style="font-size:14px"
@@ -167,6 +176,7 @@ export default {
             });
             let terLayer = new TileLayer({
                 source: Tersource,
+                zIndex: 1,
             });
             map.addLayer(terLayer);
             // 添加注记
@@ -175,6 +185,7 @@ export default {
             });
             let CTAlayer = new TileLayer({
                 source: CTAsource,
+                zIndex: 1,
             });
             map.addLayer(CTAlayer);
 
@@ -259,7 +270,8 @@ export default {
             });
             vectorLayer = new LayerVec({
                 source: iconSource,
-                style: iconStyle
+                style: iconStyle,
+                zIndex: 999,
             });
             map.addLayer(vectorLayer);
         }
@@ -287,7 +299,8 @@ export default {
             });
             fenceLayer = new LayerVec({
                 source: polygonSource,
-                style: fenceStyle
+                style: fenceStyle,
+                zIndex: 999
             });
             map.addLayer(fenceLayer)
         }
@@ -359,6 +372,7 @@ export default {
                 unByKey(dblClickEvent);
                 unByKey(clickEvent);
 
+                markerInfo = reactive({});
                 confirmOperation.value = false;
                 createMarkerSignal.value = false;
             }
@@ -420,7 +434,10 @@ export default {
         let isEdit = false;
 
         const addFence = () => {
-            Modal.getInstance("#add-fench").hide();
+            if (!isExitEdit) {
+                Modal.getInstance("#add-fench").hide();
+            }
+
             if (markerInfo.length < 3) {
                 console.log("点数不足");
                 for (let point in markerInfo) {
@@ -489,10 +506,6 @@ export default {
                 createOverlayClick();
 
             }
-
-
-
-
 
         }
 
@@ -663,8 +676,15 @@ export default {
   
 <style scoped>
 .map {
-    width: 100%;
-    height: 780px;
+    width: 100vw;
+    height: 100vh;
+}
+
+.buttonBox {
+    position: absolute;
+    left: 35%;
+    top: 70px;
+    z-index: 5;
 }
 
 .ol-popup {
@@ -714,6 +734,15 @@ export default {
 
 .ol-popup-closer:after {
     content: "×";
+}
+
+.editFenceNone:hover {
+    color: #A0D8FF;
+}
+
+.editFenceNone,
+.editFenceNone:focus:not(.editFenceNone:hover) {
+    color: #409EFF;
 }
 </style>
 
