@@ -1,10 +1,10 @@
 <template>
     <div>
         <button type="button" class="btn btn-outline-secondary" @click="createMarker()">创建围栏/取消创建</button>
-        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-            data-bs-target="#edit-fench">编辑围栏</button>
-        <button v-if="exitEditAble" type="button" class="btn btn-outline-secondary" @click="exitEdit()">退出编辑</button>
-        <button v-else type="button" class="btn btn-outline-secondary">退出编辑</button>
+        <button v-if="!exitEditAble" type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+            data-bs-target="#edit-fench">编辑围栏/取消编辑</button>
+        <button v-else type="button" class="btn btn-outline-secondary" @click="exitEdit()">编辑围栏/取消编辑</button>
+        <!-- <button v-else type="button" class="btn btn-outline-secondary">退出编辑</button> -->
 
         <button v-if="confirmOperation" type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
             data-bs-target="#add-fench">确认创建/编辑</button>
