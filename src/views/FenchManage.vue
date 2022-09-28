@@ -1,65 +1,15 @@
 <template>
     <div>
-        <!-- <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-            data-bs-target="#add-fench">绘制围栏</button>
-
-        <div class="modal fade" id="add-fench" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">添加围栏</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="add-fench-name" class="form-label">围栏名称</label>
-                            <input v-model="feature_name.name" type="text" class="form-control" id="add-fench-name"
-                                placeholder="请输入围栏名称">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" @click="draw()">创建</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    </div>
-
-                </div>
-            </div>
-        </div> -->
-
-        <!-- <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-            data-bs-target="#remove-fench">删除围栏</button>
-
-        <div class="modal fade" id="remove-fench" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">删除围栏</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="add-fench-name" class="form-label">围栏名称</label>
-                            <input v-model="deleteFenchName.name" type="text" class="form-control" id="add-fench-name"
-                                placeholder="请输入围栏名称">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" @click="deleteFench()">删除</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    </div>
-
-                </div>
-            </div>
-        </div> -->
-
         <button type="button" class="btn btn-outline-secondary" @click="createMarker()">创建围栏/取消创建</button>
         <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
             data-bs-target="#edit-fench">编辑围栏</button>
-        <button type="button" class="btn btn-outline-secondary" @click="exitEdit()">退出编辑</button>
-        <button type="button" class="btn btn-outline-secondary" @click="addFence()">确认创建/编辑</button>
-        <button type="button" class="btn btn-outline-secondary" @click="previewFence()">预览当前点生成围栏</button>
-        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-            data-bs-target="#delete-fench">删除围栏</button>
+        <button v-if="exitEditAble" type="button" class="btn btn-outline-secondary" @click="exitEdit()">退出编辑</button>
+        <button v-else type="button" class="btn btn-outline-secondary">退出编辑</button>
+
+        <button v-if="confirmOperation" type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+            data-bs-target="#add-fench">确认创建/编辑</button>
+        <button v-else type="button" class="btn btn-outline-secondary">确认创建/编辑</button>
+
 
         <div class="modal fade" id="edit-fench" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-xl">
@@ -69,11 +19,35 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="add-fench-name" class="form-label">围栏名称</label>
-                            <input v-model="editFenceName" type="text" class="form-control" id="add-fench-name"
-                                placeholder="请输入围栏名称">
-                        </div>
+                        <table class="table table-striped table-hover" id="fenceList">
+                            <thead>
+                                <tr>
+                                    <th>围栏id</th>
+                                    <th>围栏名</th>
+                                    <th>操作者</th>
+                                    <th>编辑时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(value, key) in polygonInfo" :key="key">
+                                    <td>{{value.id}}</td>
+                                    <td>{{value.name}}</td>
+                                    <td>{{value.operator}}</td>
+                                    <td>{{value.editTime}}</td>
+                                    <td>
+                                        <el-button class="editFench" link size="small" type="primary" plain text
+                                            style="font-size:14px; " @click="inEditFence(value.id)">
+                                            编辑围栏
+                                        </el-button>
+                                        <el-button link size="small" type="danger" plain text style="font-size:14px"
+                                            @click="deleteFence(value.id)">删除
+                                        </el-button>
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" @click="inEditFence()">确定</button>
@@ -84,22 +58,34 @@
             </div>
         </div>
 
-        <div class="modal fade" id="delete-fench" tabindex="-1" aria-hidden="true">
+
+        <div class="modal fade" id="add-fench" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">删除围栏</h5>
+                        <h5 class="modal-title" id="exampleModalLabel">新建围栏</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="add-fench-name" class="form-label">围栏名称</label>
-                            <input v-model="deleteFenceName" type="text" class="form-control" id="add-fench-name"
-                                placeholder="请输入围栏名称">
-                        </div>
+                        <el-form label-width="120px" style="max-width: 500px">
+                            <el-form-item label="围栏名称" width="100px">
+                                <el-input v-model="fenceInfo.name" />
+                            </el-form-item>
+                            <!-- <el-form-item label="围栏编号" width="100px">
+                                <el-input v-model="fenceInfo.id" />
+                            </el-form-item> -->
+                            <el-form-item label="创建者">
+                                <el-input v-model="fenceInfo.operator" />
+                            </el-form-item>
+                            <el-form-item label="创建/编辑时间">
+                                <el-input v-model="fenceInfo.editTime" />
+                            </el-form-item>
+
+
+                        </el-form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" @click="deleteFence()">确定</button>
+                        <button type="button" class="btn btn-primary" @click="addFence()">确定</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     </div>
 
@@ -125,23 +111,45 @@ import View from "ol/View.js";
 import { onMounted } from "vue";
 import { Style, Icon, Fill, Circle, Stroke } from "ol/style"
 import { Modal } from 'bootstrap/dist/js/bootstrap';
-import { ref } from "vue";
+import { ref, reactive } from "vue";
 import { Collection, Feature, Overlay } from "ol";
 import { Point } from "ol/geom";
 import { DoubleClickZoom, Translate } from "ol/interaction";
 import { unByKey } from "ol/Observable";
 import { Polygon } from "ol/geom";
+import { useStore } from "vuex";
+import _ from 'lodash';
 
 export default {
 
     setup() {
+        let store = useStore();
         let map = null;
+        const time = getTime(new Date());
+        const fenceInfo = ref({
+            name: '',
+            id: ' ',
+            operator: "",
+            editTime: time,
+            pointList: '',
+
+        });
 
         let editFenceName = ref("");
         const createMarkerSignal = ref(false);
         let overlayClick;
         let content;
         let popup;
+        let polygonId;
+
+        function getTime(date) {
+            let y = date.getFullYear() //年
+            let m = date.getMonth() + 1  //月，月是从0开始的所以+1
+            let d = date.getDate() //日
+            m = m < 10 ? "0" + m : m //小于10补0
+            d = d < 10 ? "0" + d : d //小于10补0
+            return y + "-" + m + "-" + d; //返回时间形式yyyy-mm-dd
+        }
 
         const initMap = () => {
             let terMap = new Map({
@@ -188,7 +196,6 @@ export default {
                 closer.blur();
                 return false;
             };
-            createOverlayClick();
 
             map.on('pointermove', function (e) {
                 let pixel = map.getEventPixel(e.originalEvent);
@@ -208,10 +215,32 @@ export default {
             createIconLayer();
             createPolygonLayer();
 
+            const polygonList = _.cloneDeep(store.state.fence.fence_list);
+
+            for (const fenceId in polygonList) {
+                let polygonFeature = createPolygonFeature(_.cloneDeep(polygonList[fenceId].markerList));
+                polygonFeature.set('name', fenceId);
+
+                polygonInfo[fenceId] = {
+                    id: polygonList[fenceId].id,
+                    name: polygonList[fenceId].name,
+                    operator: polygonList[fenceId].operator,
+                    editTime: polygonList[fenceId].editTime,
+                    markList: _.cloneDeep(polygonList[fenceId].markerList),
+                    feature: polygonFeature,
+                };
+
+                polygonSource.addFeature(polygonFeature);
+            }
+
+            createOverlayClick();
+            polygonId = store.state.fence.polygonId;
         }
 
-        let markerInfo = new Array;     // 存放每次创建或编辑中的点信息
-        let polygonInfo = new Array;   // 存放围栏点集以及feature
+        let markerInfo = reactive({});     // 存放每次创建或编辑中的点信息
+        let polygonInfo = reactive({});   // 存放围栏点集以及feature
+        let confirmOperation = ref(false);
+        let exitEditAble = ref(false);
         let dblClickEvent;
         let clickEvent;
         let vectorLayer;
@@ -273,9 +302,19 @@ export default {
                 if (feature) {
                     content.innerHTML = '';
 
-                    let info = document.createElement('h2');
-                    info.innerText = 'Test';
-                    content.appendChild(info);
+                    let featureId = feature.get('name');
+
+                    let name = document.createElement('p');
+                    name.innerText = '围栏名: ' + polygonInfo[featureId].name;
+                    content.appendChild(name);
+
+                    let operator = document.createElement('p');
+                    operator.innerText = '操作人: ' + polygonInfo[featureId].operator;
+                    content.appendChild(operator);
+
+                    let editTime = document.createElement('p');
+                    editTime.innerText = '编辑时间: ' + polygonInfo[featureId].editTime;
+                    content.appendChild(editTime);
 
                     popup.setPosition(coordinate);
                 }
@@ -303,13 +342,24 @@ export default {
                 markId = 0;
                 unByKey(overlayClick);
                 createDblClick();
+                fenceInfo.value.name = "";
+                fenceInfo.value.operator = "";
+                fenceInfo.value.editTime = time;
+
+                confirmOperation.value = true;
                 createMarkerSignal.value = true;
             } else {
                 for (let point in markerInfo) {
                     iconSource.removeFeature(markerInfo[point].feature);
                 }
+                if (beforePreview != null) {
+                    polygonSource.removeFeature(beforePreview);
+                    beforePreview = null;
+                }
                 unByKey(dblClickEvent);
                 unByKey(clickEvent);
+
+                confirmOperation.value = false;
                 createMarkerSignal.value = false;
             }
         }
@@ -317,7 +367,6 @@ export default {
         const clickHandler = (e) => {
 
             let point = e.coordinate;
-
             let iconFeature = new Feature({
                 geometry: new Point(point, "XY")
             });
@@ -335,16 +384,19 @@ export default {
             iconTranslate.on('translateend', () => {
                 let clickPoint = iconFeature.getGeometry().flatCoordinates;
                 markerInfo[iconFeature.get('name')].point = clickPoint;
+                preview();
             })
 
             markerInfo[iconFeature.get('name')] = {
                 point: point,
                 feature: iconFeature
             };
+            preview();
 
         }
 
         const createPolygonFeature = (markerList) => {
+
             let oltarget;
             sortMarker(markerList);
             markerList.push(markerList[0])
@@ -364,10 +416,11 @@ export default {
             return oltarget;
         }
 
-        let polygonId = 0;
+
         let isEdit = false;
 
         const addFence = () => {
+            Modal.getInstance("#add-fench").hide();
             if (markerInfo.length < 3) {
                 console.log("点数不足");
                 for (let point in markerInfo) {
@@ -379,7 +432,7 @@ export default {
                     markerList.push(markerInfo[point].point);
                     iconSource.removeFeature(markerInfo[point].feature);
                 }
-                markerInfo = new Array;
+                markerInfo = reactive({});
                 let oltarget;
                 if (isExitEdit) {
                     oltarget = polygonInfo[beforeFeatureId].feature;
@@ -393,47 +446,78 @@ export default {
                     oltarget.set('name', polygonId);
 
                     polygonInfo[polygonId] = {
+                        id: polygonId,
+                        name: fenceInfo.value.name,
+                        operator: fenceInfo.value.operator,
+                        editTime: fenceInfo.value.editTime,
                         markList: markerList,
                         feature: oltarget,
+
                     };
 
                     if (isEdit) {
                         polygonId = tmpPolygonId - 1;
                     }
-                    polygonId++;
-                }
 
+                    let newPolygon = {
+                        id: polygonId,
+                        name: fenceInfo.value.name,
+                        operator: fenceInfo.value.operator,
+                        editTime: fenceInfo.value.editTime,
+                        polygonId: polygonId,
+                        markerList: markerList,
+
+                    }
+                    store.commit("updateFenceList", newPolygon);
+                    polygonId++;
+                    store.commit("updatePolygonId", polygonId);
+
+                }
                 polygonSource.addFeature(oltarget);
 
+                if (beforePreview != null) {
+                    polygonSource.removeFeature(beforePreview);
+                    beforePreview = null;
+                }
                 unByKey(dblClickEvent);
                 unByKey(clickEvent);
                 createMarkerSignal.value = false;
                 isExitEdit = false;
                 isEdit = false;
+                exitEditAble.value = false;
+                confirmOperation.value = false;
                 createOverlayClick();
+
             }
+
+
+
 
 
         }
 
         let beforeFeatureId = "";
         let isExitEdit = false;
-        const inEditFence = () => {
+        const inEditFence = (editFence) => {
             Modal.getInstance("#edit-fench").hide();
             if (createMarkerSignal.value == false && isEdit == false) {
                 unByKey(overlayClick);
 
                 isEdit = true;
-                let editFence = editFenceName.value;
-                console.log(editFence);
+                exitEditAble.value = true;
+                confirmOperation.value = true;
 
                 let feature = polygonInfo[editFence].feature;
-                beforeFeatureId = feature.get('name');
+                fenceInfo.value.name = polygonInfo[editFence].name;
+                fenceInfo.value.operator = polygonInfo[editFence].operator;
+                fenceInfo.value.editTime = getTime(new Date());
+
+                beforeFeatureId = editFence;
                 polygonSource.removeFeature(feature);
 
                 createDblClick();
                 markId = 0;
-                markerInfo = new Array;
+                markerInfo = {};
                 let marklist = polygonInfo[editFence].markList
                 for (let idx in marklist) {
                     if (idx == marklist.length - 1) {
@@ -454,12 +538,14 @@ export default {
                     iconTranslate.on('translateend', () => {
                         let clickPoint = iconFeature.getGeometry().flatCoordinates;
                         markerInfo[iconFeature.get('name')].point = clickPoint;
+                        preview();
                     })
 
                     markerInfo[iconFeature.get('name')] = {
                         point: point,
                         feature: iconFeature
                     };
+                    preview();
                 }
             }
             editFenceName.value = "";
@@ -471,34 +557,6 @@ export default {
             addFence();
         }
 
-        const previewFence = () => {
-            let markerList = [];
-            for (let point in markerInfo) {
-                markerList.push(markerInfo[point].point);
-            }
-            let previewPolygonFeature = createPolygonFeature(markerList);
-            polygonSource.addFeature(previewPolygonFeature);
-            let intervalId = setInterval(function () {
-
-                previewPolygonFeature.setStyle(
-                    new Style({
-                        fill: new Fill({ color: 'rgba(238,232,170, 0.7)' })
-                    })
-                );
-                setTimeout(() => {
-                    previewPolygonFeature.setStyle(
-                        new Style({
-                            fill: new Fill({ color: 'rgba(152,251,152, 0.7)' })
-                        })
-                    )
-                }, 400);
-
-                setTimeout(() => {
-                    polygonSource.removeFeature(previewPolygonFeature);
-                    clearInterval(intervalId);
-                }, 3000);
-            }, 800)
-        }
 
         const sortMarker = (markerList) => {
             let geometryPoints = [];
@@ -540,11 +598,11 @@ export default {
 
         }
 
-        let deleteFenceName = ref("");
-        const deleteFence = () => {
-            Modal.getInstance("#delete-fench").hide();
-            const fenceFeature = polygonInfo[deleteFenceName.value].feature;
-            delete polygonInfo[deleteFenceName.value];
+        const deleteFence = (deleteFence) => {
+            Modal.getInstance("#edit-fench").hide();
+            const fenceFeature = polygonInfo[deleteFence].feature;
+            store.commit("removeFence", deleteFence);
+            delete polygonInfo[deleteFence]
             polygonSource.removeFeature(fenceFeature);
         }
 
@@ -553,16 +611,46 @@ export default {
             initMap();
         });
 
+        let beforePreview = null;
+        const preview = () => {
+            let len = Object.keys(markerInfo).length;
+            if (len >= 3) {
+                if (beforePreview != null) {
+                    polygonSource.removeFeature(beforePreview);
+                }
+                let markerList = [];
+
+                for (let point in markerInfo) {
+                    markerList.push(markerInfo[point].point);
+                }
+
+                let nowFeature = createPolygonFeature(markerList);
+                nowFeature.setStyle(
+                    new Style({
+                        stroke: new Stroke({
+                            lineDash: [10, 10, 10, 10],
+                            color: "#4e98f444",
+                            width: 3
+                        })
+                    })
+                );
+                beforePreview = nowFeature;
+                polygonSource.addFeature(nowFeature);
+            }
+        }
+
 
         return {
             createMarker,
             addFence,
             inEditFence,
             exitEdit,
-            previewFence,
             deleteFence,
             editFenceName,
-            deleteFenceName,
+            fenceInfo,
+            polygonInfo,
+            confirmOperation,
+            exitEditAble,
         }
 
 

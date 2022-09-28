@@ -1,112 +1,5 @@
 <template>
     <div>
-        <!-- <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-            data-bs-target="#add-fench">绘制围栏</button>
-
-        <div class="modal fade" id="add-fench" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">添加围栏</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="add-fench-name" class="form-label">围栏名称</label>
-                            <input v-model="feature_name.name" type="text" class="form-control" id="add-fench-name"
-                                placeholder="请输入围栏名称">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" @click="draw()">创建</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    </div>
-
-                </div>
-            </div>
-        </div> -->
-
-        <!-- <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-            data-bs-target="#remove-fench">删除围栏</button>
-
-        <div class="modal fade" id="remove-fench" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">删除围栏</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="add-fench-name" class="form-label">围栏名称</label>
-                            <input v-model="deleteFenchName.name" type="text" class="form-control" id="add-fench-name"
-                                placeholder="请输入围栏名称">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" @click="deleteFench()">删除</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    </div>
-
-                </div>
-            </div>
-        </div> -->
-
-        <button type="button" class="btn btn-outline-secondary" @click="createMarker()">创建围栏/取消创建</button>
-        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-            data-bs-target="#edit-fench">编辑围栏</button>
-        <button type="button" class="btn btn-outline-secondary" @click="exitEdit()">退出编辑</button>
-        <button type="button" class="btn btn-outline-secondary" @click="addFence()">确认创建/编辑</button>
-        <button type="button" class="btn btn-outline-secondary" @click="previewFence()">预览当前点生成围栏</button>
-        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
-            data-bs-target="#delete-fench">删除围栏</button>
-
-        <div class="modal fade" id="edit-fench" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">修改围栏</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="add-fench-name" class="form-label">围栏名称</label>
-                            <input v-model="editFenceName" type="text" class="form-control" id="add-fench-name"
-                                placeholder="请输入围栏名称">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" @click="inEditFence()">确定</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <div class="modal fade" id="delete-fench" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">删除围栏</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="add-fench-name" class="form-label">围栏名称</label>
-                            <input v-model="deleteFenceName" type="text" class="form-control" id="add-fench-name"
-                                placeholder="请输入围栏名称">
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" @click="deleteFence()">确定</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
         <div class="map" id="olMap"></div>
         <div id="popup" class="ol-popup">
             <a href="#" id="popup-closer" class="ol-popup-closer"></a>
@@ -122,28 +15,26 @@ import { Vector as SourceVec } from 'ol/source';
 import XYZ from "ol/source/XYZ";
 import Map from "ol/Map.js";
 import View from "ol/View.js";
-import { onMounted } from "vue";
-import { Style, Icon, Fill, Circle, Stroke } from "ol/style"
-import { Modal } from 'bootstrap/dist/js/bootstrap';
-import { ref } from "vue";
-import { Collection, Feature, Overlay } from "ol";
-import { Point } from "ol/geom";
-import { DoubleClickZoom, Translate } from "ol/interaction";
-import { unByKey } from "ol/Observable";
+import { onMounted, ref } from "vue";
+import { Style, Fill, Circle, Stroke } from "ol/style"
+import { Overlay, Feature } from "ol";
+import { useStore } from "vuex";
+import { DoubleClickZoom } from "ol/interaction";
 import { Polygon } from "ol/geom";
+import _ from 'lodash'
 
 export default {
 
     setup() {
+        let store = useStore();
         let map = null;
-
-        let editFenceName = ref("");
-        const createMarkerSignal = ref(false);
-        let overlayClick;
+        let polygonList = _.cloneDeep(store.state.fence.fence_list);
         let content;
         let popup;
-
+        let polygonInfo = ref({});
         const initMap = () => {
+
+
             let terMap = new Map({
                 target: "olMap",
                 view: new View({
@@ -205,34 +96,25 @@ export default {
                 });
             map.removeInteraction(dblClickInteraction);
 
-            createIconLayer();
             createPolygonLayer();
 
-        }
+            for (const fenceId in polygonList) {
+                // let polygonFeature = createPolygonFeature(_.cloneDeep(polygonList[fenceId]));
+                let polygonFeature = createPolygonFeature(polygonList[fenceId].markerList);
 
-        let markerInfo = new Array;     // 存放每次创建或编辑中的点信息
-        let polygonInfo = new Array;   // 存放围栏点集以及feature
-        let dblClickEvent;
-        let clickEvent;
-        let vectorLayer;
-        let iconSource;
-        let markId;
+                polygonFeature.set('name', fenceId);
 
-        const createIconLayer = () => {
-            iconSource = new SourceVec();
-            let iconStyle = new Style({
-                image: new Icon({
-                    anchorOrigin: 'bottom-left',
-                    anchorYUnits: "pixels",
-                    opacity: 0.75,
-                    src: '/images/location2.png'
-                })
-            });
-            vectorLayer = new LayerVec({
-                source: iconSource,
-                style: iconStyle
-            });
-            map.addLayer(vectorLayer);
+                polygonInfo[fenceId] = {
+                    id: polygonList[fenceId].id,
+                    name: polygonList[fenceId].name,
+                    operator: polygonList[fenceId].operator,
+                    editTime: polygonList[fenceId].editTime,
+                    markList: _.cloneDeep(polygonList[fenceId].markerList),
+                    feature: polygonFeature,
+                };
+                polygonSource.addFeature(polygonFeature);
+            }
+
         }
 
         let polygonSource;
@@ -264,7 +146,7 @@ export default {
         }
 
         const createOverlayClick = () => {
-            overlayClick = map.on('singleclick', function (e) {
+            map.on('singleclick', function (e) {
                 let coordinate = e.coordinate;
                 let feature = map.forEachFeatureAtPixel(e.pixel, function (feature) {
                     return feature;
@@ -273,78 +155,27 @@ export default {
                 if (feature) {
                     content.innerHTML = '';
 
-                    let info = document.createElement('h2');
-                    info.innerText = 'Test';
-                    content.appendChild(info);
+                    let featureId = feature.get('name');
+
+                    let name = document.createElement('p');
+                    name.innerText = '围栏名: ' + polygonInfo[featureId].name;
+                    content.appendChild(name);
+
+                    let operator = document.createElement('p');
+                    operator.innerText = '操作人: ' + polygonInfo[featureId].operator;
+                    content.appendChild(operator);
+
+                    let editTime = document.createElement('p');
+                    editTime.innerText = '编辑时间: ' + polygonInfo[featureId].editTime;
+                    content.appendChild(editTime);
 
                     popup.setPosition(coordinate);
                 }
             });
         }
 
-        const createDblClick = () => {
-            dblClickEvent = map.on('dblclick', function (e) {
-                let feature = map.forEachFeatureAtPixel(e.pixel, function (feature) {
-                    return feature;
-                });
-
-                if (feature) {
-                    delete markerInfo[feature.get('name')];
-                    iconSource.removeFeature(feature);
-                } else {
-                    clickHandler(e);
-                }
-
-            });
-        }
-
-        const createMarker = () => {
-            if (createMarkerSignal.value === false) {
-                markId = 0;
-                unByKey(overlayClick);
-                createDblClick();
-                createMarkerSignal.value = true;
-            } else {
-                for (let point in markerInfo) {
-                    iconSource.removeFeature(markerInfo[point].feature);
-                }
-                unByKey(dblClickEvent);
-                unByKey(clickEvent);
-                createMarkerSignal.value = false;
-            }
-        }
-
-        const clickHandler = (e) => {
-
-            let point = e.coordinate;
-
-            let iconFeature = new Feature({
-                geometry: new Point(point, "XY")
-            });
-
-            iconFeature.set('name', markId);
-            markId++;
-
-            iconSource.addFeature(iconFeature);
-
-            let iconTranslate = new Translate({
-                features: new Collection([iconFeature])
-            });
-            map.addInteraction(iconTranslate);
-
-            iconTranslate.on('translateend', () => {
-                let clickPoint = iconFeature.getGeometry().flatCoordinates;
-                markerInfo[iconFeature.get('name')].point = clickPoint;
-            })
-
-            markerInfo[iconFeature.get('name')] = {
-                point: point,
-                feature: iconFeature
-            };
-
-        }
-
         const createPolygonFeature = (markerList) => {
+
             let oltarget;
             sortMarker(markerList);
             markerList.push(markerList[0])
@@ -362,142 +193,6 @@ export default {
                 })
             );
             return oltarget;
-        }
-
-        let polygonId = 0;
-        let isEdit = false;
-
-        const addFence = () => {
-            if (markerInfo.length < 3) {
-                console.log("点数不足");
-                for (let point in markerInfo) {
-                    iconSource.removeFeature(markerInfo[point].feature);
-                }
-            } else {
-                let markerList = [];
-                for (let point in markerInfo) {
-                    markerList.push(markerInfo[point].point);
-                    iconSource.removeFeature(markerInfo[point].feature);
-                }
-                markerInfo = new Array;
-                let oltarget;
-                if (isExitEdit) {
-                    oltarget = polygonInfo[beforeFeatureId].feature;
-                } else {
-
-                    oltarget = createPolygonFeature(markerList);
-                    let tmpPolygonId = polygonId;
-                    if (isEdit) {
-                        polygonId = beforeFeatureId;
-                    }
-                    oltarget.set('name', polygonId);
-
-                    polygonInfo[polygonId] = {
-                        markList: markerList,
-                        feature: oltarget,
-                    };
-
-                    if (isEdit) {
-                        polygonId = tmpPolygonId - 1;
-                    }
-                    polygonId++;
-                }
-
-                polygonSource.addFeature(oltarget);
-
-                unByKey(dblClickEvent);
-                unByKey(clickEvent);
-                createMarkerSignal.value = false;
-                isExitEdit = false;
-                isEdit = false;
-                createOverlayClick();
-            }
-
-
-        }
-
-        let beforeFeatureId = "";
-        let isExitEdit = false;
-        const inEditFence = () => {
-            Modal.getInstance("#edit-fench").hide();
-            if (createMarkerSignal.value == false && isEdit == false) {
-                unByKey(overlayClick);
-
-                isEdit = true;
-                let editFence = editFenceName.value;
-                console.log(editFence);
-
-                let feature = polygonInfo[editFence].feature;
-                beforeFeatureId = feature.get('name');
-                polygonSource.removeFeature(feature);
-
-                createDblClick();
-                markId = 0;
-                markerInfo = new Array;
-                let marklist = polygonInfo[editFence].markList
-                for (let idx in marklist) {
-                    if (idx == marklist.length - 1) {
-                        break;
-                    }
-                    let point = marklist[idx];
-                    let iconFeature = new Feature({
-                        geometry: new Point(point, "XY"),
-                    });
-                    iconSource.addFeature(iconFeature);
-                    let iconTranslate = new Translate({
-                        features: new Collection([iconFeature])
-                    });
-                    iconFeature.set('name', markId);
-                    markId++;
-                    map.addInteraction(iconTranslate);
-
-                    iconTranslate.on('translateend', () => {
-                        let clickPoint = iconFeature.getGeometry().flatCoordinates;
-                        markerInfo[iconFeature.get('name')].point = clickPoint;
-                    })
-
-                    markerInfo[iconFeature.get('name')] = {
-                        point: point,
-                        feature: iconFeature
-                    };
-                }
-            }
-            editFenceName.value = "";
-
-        };
-
-        const exitEdit = () => {
-            isExitEdit = true;
-            addFence();
-        }
-
-        const previewFence = () => {
-            let markerList = [];
-            for (let point in markerInfo) {
-                markerList.push(markerInfo[point].point);
-            }
-            let previewPolygonFeature = createPolygonFeature(markerList);
-            polygonSource.addFeature(previewPolygonFeature);
-            let intervalId = setInterval(function () {
-
-                previewPolygonFeature.setStyle(
-                    new Style({
-                        fill: new Fill({ color: 'rgba(238,232,170, 0.7)' })
-                    })
-                );
-                setTimeout(() => {
-                    previewPolygonFeature.setStyle(
-                        new Style({
-                            fill: new Fill({ color: 'rgba(152,251,152, 0.7)' })
-                        })
-                    )
-                }, 400);
-
-                setTimeout(() => {
-                    polygonSource.removeFeature(previewPolygonFeature);
-                    clearInterval(intervalId);
-                }, 3000);
-            }, 800)
         }
 
         const sortMarker = (markerList) => {
@@ -540,14 +235,6 @@ export default {
 
         }
 
-        let deleteFenceName = ref("");
-        const deleteFence = () => {
-            Modal.getInstance("#delete-fench").hide();
-            const fenceFeature = polygonInfo[deleteFenceName.value].feature;
-            delete polygonInfo[deleteFenceName.value];
-            polygonSource.removeFeature(fenceFeature);
-        }
-
 
         onMounted(() => {
             initMap();
@@ -555,14 +242,6 @@ export default {
 
 
         return {
-            createMarker,
-            addFence,
-            inEditFence,
-            exitEdit,
-            previewFence,
-            deleteFence,
-            editFenceName,
-            deleteFenceName,
         }
 
 

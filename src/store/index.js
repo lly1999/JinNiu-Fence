@@ -1,5 +1,5 @@
 import { createStore } from 'vuex'
-import ModuleFench from './fench'
+import ModuleFench from './fence'
 
 export default createStore({
   state: {
@@ -11,6 +11,6 @@ export default createStore({
   actions: {
   },
   modules: {
-    fench: ModuleFench
+    fence: ModuleFench
   }
 })
