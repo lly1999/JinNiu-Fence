@@ -1,7 +1,10 @@
 <template>
     <div>
         <div class="buttonBox">
-            <button type="button" class="btn btn-primary" @click="createMarker()">创建围栏/取消创建</button>
+            <button v-if="!exitEditAble" type="button" class="btn btn-primary"
+                @click="createMarker()">创建围栏/取消创建</button>
+            <button v-else type="button" class="btn btn-primary">创建围栏/取消创建</button>
+
             <button v-if="!exitEditAble" type="button" class="btn btn-primary" data-bs-toggle="modal"
                 data-bs-target="#edit-fench" style="margin-left:10px">编辑围栏/取消编辑</button>
             <button v-else type="button" class="btn btn-primary" @click="exitEdit()"
@@ -45,8 +48,8 @@
                                             @click="inEditFence(value.id)">
                                             编辑围栏
                                         </el-button>
-                                        <el-button v-else class="editFenceNone" link size="small" type="primary" plain
-                                            text style="font-size:14px; ">
+                                        <el-button v-else @click="inEditMessage()" class="editFenceNone" link
+                                            size="small" type="primary" plain text style="font-size:14px; ">
                                             编辑围栏
                                         </el-button>
                                         <el-button link size="small" type="danger" plain text style="font-size:14px"
@@ -59,8 +62,8 @@
                         </table>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" @click="inEditFence()">确定</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <!-- <button type="button" class="btn btn-primary" @click="inEditFence()">确定</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button> -->
                     </div>
 
                 </div>
@@ -87,7 +90,7 @@
                                 <el-input v-model="fenceInfo.operator" />
                             </el-form-item>
                             <el-form-item label="创建/编辑时间">
-                                <el-input v-model="fenceInfo.editTime" />
+                                <el-input :disabled="isDisabled" v-model="fenceInfo.editTime" />
                             </el-form-item>
 
 
@@ -128,6 +131,8 @@ import { unByKey } from "ol/Observable";
 import { Polygon } from "ol/geom";
 import { useStore } from "vuex";
 import _ from 'lodash';
+import { ElMessage } from 'element-plus';
+import 'element-plus/theme-chalk/el-message.css';
 
 export default {
 
@@ -143,6 +148,8 @@ export default {
             pointList: '',
 
         });
+
+        const isDisabled = ref(true);
 
         let editFenceName = ref("");
         const createMarkerSignal = ref(false);
@@ -165,7 +172,7 @@ export default {
                 target: "olMap",
                 view: new View({
                     center: [104.04396204, 30.71499549],
-                    zoom: 15,
+                    zoom: 13,
                     projection: "EPSG:4326",
                 }),
             });
@@ -271,7 +278,7 @@ export default {
             vectorLayer = new LayerVec({
                 source: iconSource,
                 style: iconStyle,
-                zIndex: 999,
+                zIndex: 15,
             });
             map.addLayer(vectorLayer);
         }
@@ -300,7 +307,7 @@ export default {
             fenceLayer = new LayerVec({
                 source: polygonSource,
                 style: fenceStyle,
-                zIndex: 999
+                zIndex: 15
             });
             map.addLayer(fenceLayer)
         }
@@ -650,6 +657,14 @@ export default {
                 beforePreview = nowFeature;
                 polygonSource.addFeature(nowFeature);
             }
+        };
+
+        const inEditMessage = () => {
+            ElMessage({
+                message: '处于编辑状态中！',
+                type: 'warning',
+                duration: 2000,
+            })
         }
 
 
@@ -659,11 +674,13 @@ export default {
             inEditFence,
             exitEdit,
             deleteFence,
+            inEditMessage,
             editFenceName,
             fenceInfo,
             polygonInfo,
             confirmOperation,
             exitEditAble,
+            isDisabled
         }
 
 

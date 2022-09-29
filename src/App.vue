@@ -12,7 +12,8 @@ import "bootstrap/dist/js/bootstrap"
 export default {
   components: {
     NavBar,
-  }
+  },
+
 }
 
 </script>
@@ -23,26 +24,8 @@ export default {
   height: 100vh;
   margin: 0;
   padding: 0;
+  /* background: linear-gradient(90deg, #000 0, #013 35%, #013 65%, #000);
+  z-index: 20;
+  position: absolute; */
 }
-
-/* nav {
-  position: absolute;
-  z-index: 5;
-  width: 100vw;
-  padding: 0;
-  margin: 0;
-} */
-
-/* nav {
-  padding: 30px;
-}
-
-nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-nav a.router-link-exact-active {
-  color: #42b983;
-} */
 </style>

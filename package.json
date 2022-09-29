@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.0.9",
+    "@jiaminghi/data-view": "^2.10.0",
+    "@kjgl77/datav-vue3": "^1.3.3",
     "@popperjs/core": "^2.11.6",
     "@vuemap/unplugin-resolver": "^1.0.4",
     "bootstrap": "^5.2.1",
