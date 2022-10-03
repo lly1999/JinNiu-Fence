@@ -125,7 +125,7 @@ import { Polygon } from "ol/geom";
 import { ElMessage } from 'element-plus';
 import 'element-plus/theme-chalk/el-message.css';
 import axios from 'axios'
-import { stringToList } from '../scripts/utils'
+import { stringToList, getStandardTime, getTTime, sortPoint } from '../scripts/utils'
 
 export default {
 
@@ -151,14 +151,14 @@ export default {
         let content;
         let popup;
 
-        function getStandardTime(time) {
-            // `8 * 3600 * 1000 补充时差` 北京东八区所以补八个小时 
-            return new Date(+new Date(time) + 8 * 3600 * 1000).toISOString().replace(/T/g, ' ').replace(/\.[\d]{3}Z/, '')
-        }
+        // function getStandardTime(time) {
+        //     // `8 * 3600 * 1000 补充时差` 北京东八区所以补八个小时 
+        //     return new Date(+new Date(time) + 8 * 3600 * 1000).toISOString().replace(/T/g, ' ').replace(/\.[\d]{3}Z/, '')
+        // }
 
-        const getTTime = (time) => {
-            return new Date(+new Date(time) + 8 * 3600 * 1000).toISOString();
-        }
+        // const getTTime = (time) => {
+        //     return new Date(+new Date(time) + 8 * 3600 * 1000).toISOString();
+        // }
 
         const initMap = () => {
             let terMap = new Map({
@@ -356,6 +356,7 @@ export default {
                 if (feature) {
                     delete markerInfo[feature.get('name')];
                     iconSource.removeFeature(feature);
+                    preview();
                 } else {
                     clickHandler(e);
                 }
@@ -430,6 +431,8 @@ export default {
                 return null;
             }
             // sortMarker(markerList);
+            // console.log(sortPoint(markerList));
+            markerList = sortPoint(markerList);
             markerList.push(markerList[0])
 
             const tmp = new Polygon([markerList]);
@@ -548,10 +551,11 @@ export default {
                 markId = 0;
                 markerInfo = {};
                 let marklist = polygonInfo[editFence].markList
+
                 for (let idx in marklist) {
-                    if (idx == marklist.length - 1) {
-                        break;
-                    }
+                    // if (idx == marklist.length - 1) {
+                    //     break;
+                    // }
                     let point = marklist[idx];
                     let iconFeature = new Feature({
                         geometry: new Point(point, "XY"),
@@ -629,7 +633,6 @@ export default {
 
         const deleteFence = (deleteFence) => {
             Modal.getInstance("#edit-fench").hide();
-            // const fenceFeature = polygonInfo[deleteFence].feature;
 
             axios({
                 url: '/api/region/' + deleteFence + '/',
@@ -640,9 +643,7 @@ export default {
             }).then(function (resp) {
                 console.log(resp);
             })
-            // store.commit("removeFence", deleteFence);
-            // delete polygonInfo[deleteFence]
-            //polygonSource.removeFeature(fenceFeature);
+
             refresh_polygonInfo();
         }
 
@@ -676,6 +677,10 @@ export default {
                 );
                 beforePreview = nowFeature;
                 polygonSource.addFeature(nowFeature);
+            } else {
+                if (beforePreview != null) {
+                    polygonSource.removeFeature(beforePreview);
+                }
             }
         };
 

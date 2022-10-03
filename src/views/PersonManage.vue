@@ -236,6 +236,8 @@ export default {
             name: '',
             fenceName: '',
             office: '',
+            department: '',
+            task: '',
             phone: '',
             wechat: '',
             street: '',
