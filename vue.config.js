@@ -14,6 +14,17 @@ module.exports = defineConfig({
         resolvers: [ElementPlusResolver()],
       }),
     ],
+  },
+  devServer: {
+    proxy: {
+      '/api': {
+        target: 'http://101.37.246.72:9090',//服务器
+        changeOrigin: true,
+        pathRewrite: {
+          '^/api': ''//将url中起始的'/api'替换成''，比如将/api/getDeptList替换成/getDeptList
+        }
+      }
+    }
   }
 
 })

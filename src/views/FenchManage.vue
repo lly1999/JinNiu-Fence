@@ -1,22 +1,27 @@
 <template>
     <div>
         <div class="buttonBox">
-            <button type="button" class="btn btn-primary" @click="createMarker()">创建围栏/取消创建</button>
+            <button v-if="!exitEditAble" type="button" class="btn btn-primary"
+                @click="createMarker()">创建围栏/取消创建</button>
+            <button v-else type="button" class="btn btn-primary">创建围栏/取消创建</button>
+
             <button v-if="!exitEditAble" type="button" class="btn btn-primary" data-bs-toggle="modal"
                 data-bs-target="#edit-fench" style="margin-left:10px">编辑围栏/取消编辑</button>
             <button v-else type="button" class="btn btn-primary" @click="exitEdit()"
                 style="margin-left:10px">编辑围栏/取消编辑</button>
             <!-- <button v-else type="button" class="btn btn-outline-secondary">退出编辑</button> -->
 
-            <button v-if="confirmOperation" type="button" class="btn btn-primary" data-bs-toggle="modal"
-                data-bs-target="#add-fench" style="margin-left:10px">确认创建/编辑</button>
+            <!-- <button v-if="confirmOperation" type="button" class="btn btn-primary" data-bs-toggle="modal"
+                data-bs-target="#add-fench" style="margin-left:10px">确认创建/编辑</button> -->
+            <button v-if="confirmOperation" type="button" class="btn btn-primary" @click="openAddDialog()"
+                style="margin-left:10px">确认创建/编辑</button>
             <button v-else type="button" class="btn btn-primary" style="margin-left:10px">确认创建/编辑</button>
 
         </div>
 
 
         <div class="modal fade" id="edit-fench" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="exampleModalLabel">修改围栏</h5>
@@ -26,7 +31,7 @@
                         <table class="table table-striped table-hover" id="fenceList">
                             <thead>
                                 <tr>
-                                    <th>围栏id</th>
+
                                     <th>围栏名</th>
                                     <th>操作者</th>
                                     <th>编辑时间</th>
@@ -35,7 +40,6 @@
                             </thead>
                             <tbody>
                                 <tr v-for="(value, key) in polygonInfo" :key="key">
-                                    <td>{{value.id}}</td>
                                     <td>{{value.name}}</td>
                                     <td>{{value.operator}}</td>
                                     <td>{{value.editTime}}</td>
@@ -45,8 +49,8 @@
                                             @click="inEditFence(value.id)">
                                             编辑围栏
                                         </el-button>
-                                        <el-button v-else class="editFenceNone" link size="small" type="primary" plain
-                                            text style="font-size:14px; ">
+                                        <el-button v-else @click="inEditMessage()" class="editFenceNone" link
+                                            size="small" type="primary" plain text style="font-size:14px; ">
                                             编辑围栏
                                         </el-button>
                                         <el-button link size="small" type="danger" plain text style="font-size:14px"
@@ -59,48 +63,40 @@
                         </table>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" @click="inEditFence()">确定</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <!-- <button type="button" class="btn btn-primary" @click="inEditFence()">确定</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button> -->
                     </div>
 
                 </div>
             </div>
         </div>
 
+        <el-dialog v-model="addFenceVisiable" title="创建围栏">
+            <template #default>
+                <el-form label-width="120px" style="max-width: 500px">
+                    <el-form-item label="围栏名称" width="100px">
+                        <el-input v-model="fenceInfo.name" />
+                    </el-form-item>
 
-        <div class="modal fade" id="add-fench" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">新建围栏</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <el-form label-width="120px" style="max-width: 500px">
-                            <el-form-item label="围栏名称" width="100px">
-                                <el-input v-model="fenceInfo.name" />
-                            </el-form-item>
-                            <!-- <el-form-item label="围栏编号" width="100px">
-                                <el-input v-model="fenceInfo.id" />
-                            </el-form-item> -->
-                            <el-form-item label="创建者">
-                                <el-input v-model="fenceInfo.operator" />
-                            </el-form-item>
-                            <el-form-item label="创建/编辑时间">
-                                <el-input v-model="fenceInfo.editTime" />
-                            </el-form-item>
+                    <el-form-item label="创建者">
+                        <el-input v-model="fenceInfo.operator" />
+                    </el-form-item>
+                    <el-form-item label="创建/编辑时间">
+                        <el-input :disabled="isDisabled" v-model="fenceInfo.editTime" />
+                    </el-form-item>
 
 
-                        </el-form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" @click="addFence()">确定</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    </div>
+                </el-form>
+            </template>
+            <template #footer>
+                <span class="dialog-footer">
+                    <button type="button" class="btn btn-primary" @click="addFence()">确定</button>
+                    <button type="button" class="btn btn-secondary" style="margin-left:10px;"
+                        @click="addFenceVisiable=false;">取消</button>
+                </span>
+            </template>
+        </el-dialog>
 
-                </div>
-            </div>
-        </div>
 
         <div class="map" id="olMap"></div>
         <div id="popup" class="ol-popup">
@@ -126,38 +122,42 @@ import { Point } from "ol/geom";
 import { DoubleClickZoom, Translate } from "ol/interaction";
 import { unByKey } from "ol/Observable";
 import { Polygon } from "ol/geom";
-import { useStore } from "vuex";
-import _ from 'lodash';
+import { ElMessage } from 'element-plus';
+import 'element-plus/theme-chalk/el-message.css';
+import axios from 'axios'
+import { stringToList } from '../scripts/utils'
 
 export default {
 
     setup() {
-        let store = useStore();
+
         let map = null;
-        const time = getTime(new Date());
+        const addFenceVisiable = ref(false);
+
         const fenceInfo = ref({
             name: '',
             id: ' ',
             operator: "",
-            editTime: time,
+            editTime: '',
             pointList: '',
 
         });
+
+        const isDisabled = ref(true);
 
         let editFenceName = ref("");
         const createMarkerSignal = ref(false);
         let overlayClick;
         let content;
         let popup;
-        let polygonId;
 
-        function getTime(date) {
-            let y = date.getFullYear() //年
-            let m = date.getMonth() + 1  //月，月是从0开始的所以+1
-            let d = date.getDate() //日
-            m = m < 10 ? "0" + m : m //小于10补0
-            d = d < 10 ? "0" + d : d //小于10补0
-            return y + "-" + m + "-" + d; //返回时间形式yyyy-mm-dd
+        function getStandardTime(time) {
+            // `8 * 3600 * 1000 补充时差` 北京东八区所以补八个小时 
+            return new Date(+new Date(time) + 8 * 3600 * 1000).toISOString().replace(/T/g, ' ').replace(/\.[\d]{3}Z/, '')
+        }
+
+        const getTTime = (time) => {
+            return new Date(+new Date(time) + 8 * 3600 * 1000).toISOString();
         }
 
         const initMap = () => {
@@ -165,7 +165,7 @@ export default {
                 target: "olMap",
                 view: new View({
                     center: [104.04396204, 30.71499549],
-                    zoom: 15,
+                    zoom: 13,
                     projection: "EPSG:4326",
                 }),
             });
@@ -226,26 +226,10 @@ export default {
             createIconLayer();
             createPolygonLayer();
 
-            const polygonList = _.cloneDeep(store.state.fence.fence_list);
-
-            for (const fenceId in polygonList) {
-                let polygonFeature = createPolygonFeature(_.cloneDeep(polygonList[fenceId].markerList));
-                polygonFeature.set('name', fenceId);
-
-                polygonInfo[fenceId] = {
-                    id: polygonList[fenceId].id,
-                    name: polygonList[fenceId].name,
-                    operator: polygonList[fenceId].operator,
-                    editTime: polygonList[fenceId].editTime,
-                    markList: _.cloneDeep(polygonList[fenceId].markerList),
-                    feature: polygonFeature,
-                };
-
-                polygonSource.addFeature(polygonFeature);
-            }
+            refresh_polygonInfo();
 
             createOverlayClick();
-            polygonId = store.state.fence.polygonId;
+
         }
 
         let markerInfo = reactive({});     // 存放每次创建或编辑中的点信息
@@ -257,6 +241,35 @@ export default {
         let vectorLayer;
         let iconSource;
         let markId;
+
+        const refresh_polygonInfo = () => {
+            Object.keys(polygonInfo).map(key => {
+                polygonSource.removeFeature(polygonInfo[key].feature);
+                delete polygonInfo[key]
+            });
+            axios({
+                url: "/api/region",
+                method: "get"
+            }).then(function (resp) {
+                for (const item of resp.data.data) {
+                    let pointList = stringToList(item.pointList);
+                    if (pointList.length < 3) continue;
+
+                    let polygonFeature = createPolygonFeature(pointList);
+                    polygonFeature.set('name', item.id);
+                    polygonSource.addFeature(polygonFeature);
+
+                    polygonInfo[item.id] = {
+                        id: item.id,
+                        name: item.name,
+                        operator: item.creator,
+                        editTime: getStandardTime(item.createTime),
+                        markList: pointList,
+                        feature: polygonFeature
+                    }
+                }
+            })
+        }
 
         const createIconLayer = () => {
             iconSource = new SourceVec();
@@ -271,7 +284,7 @@ export default {
             vectorLayer = new LayerVec({
                 source: iconSource,
                 style: iconStyle,
-                zIndex: 999,
+                zIndex: 15,
             });
             map.addLayer(vectorLayer);
         }
@@ -300,7 +313,7 @@ export default {
             fenceLayer = new LayerVec({
                 source: polygonSource,
                 style: fenceStyle,
-                zIndex: 999
+                zIndex: 15
             });
             map.addLayer(fenceLayer)
         }
@@ -357,7 +370,7 @@ export default {
                 createDblClick();
                 fenceInfo.value.name = "";
                 fenceInfo.value.operator = "";
-                fenceInfo.value.editTime = time;
+                fenceInfo.value.editTime = getTTime(new Date().toISOString());
 
                 confirmOperation.value = true;
                 createMarkerSignal.value = true;
@@ -412,7 +425,11 @@ export default {
         const createPolygonFeature = (markerList) => {
 
             let oltarget;
-            sortMarker(markerList);
+
+            if (markerList.length < 3) {
+                return null;
+            }
+            // sortMarker(markerList);
             markerList.push(markerList[0])
 
             const tmp = new Polygon([markerList]);
@@ -432,10 +449,9 @@ export default {
 
 
         let isEdit = false;
-
         const addFence = () => {
             if (!isExitEdit) {
-                Modal.getInstance("#add-fench").hide();
+                addFenceVisiable.value = false;
             }
 
             if (markerInfo.length < 3) {
@@ -453,44 +469,39 @@ export default {
                 let oltarget;
                 if (isExitEdit) {
                     oltarget = polygonInfo[beforeFeatureId].feature;
+                    polygonSource.addFeature(oltarget);
                 } else {
 
-                    oltarget = createPolygonFeature(markerList);
-                    let tmpPolygonId = polygonId;
+                    let newPolygon;
                     if (isEdit) {
-                        polygonId = beforeFeatureId;
-                    }
-                    oltarget.set('name', polygonId);
-
-                    polygonInfo[polygonId] = {
-                        id: polygonId,
-                        name: fenceInfo.value.name,
-                        operator: fenceInfo.value.operator,
-                        editTime: fenceInfo.value.editTime,
-                        markList: markerList,
-                        feature: oltarget,
-
-                    };
-
-                    if (isEdit) {
-                        polygonId = tmpPolygonId - 1;
+                        newPolygon = {
+                            id: beforeFeatureId,
+                            name: fenceInfo.value.name,
+                            creator: fenceInfo.value.operator,
+                            createTime: getTTime(new Date().toISOString()),
+                            pointList: JSON.stringify(markerList),
+                        }
+                    } else {
+                        newPolygon = {
+                            name: fenceInfo.value.name,
+                            creator: fenceInfo.value.operator,
+                            createTime: getTTime(new Date().toISOString()),
+                            pointList: JSON.stringify(markerList),
+                        }
                     }
 
-                    let newPolygon = {
-                        id: polygonId,
-                        name: fenceInfo.value.name,
-                        operator: fenceInfo.value.operator,
-                        editTime: fenceInfo.value.editTime,
-                        polygonId: polygonId,
-                        markerList: markerList,
+                    axios({
+                        url: "/api/region",
+                        method: "post",
 
-                    }
-                    store.commit("updateFenceList", newPolygon);
-                    polygonId++;
-                    store.commit("updatePolygonId", polygonId);
+                        data: newPolygon,
+                    }).then(function (resp) {
+                        if (resp.status == 200) {
+                            refresh_polygonInfo();
+                        }
+                    })
 
                 }
-                polygonSource.addFeature(oltarget);
 
                 if (beforePreview != null) {
                     polygonSource.removeFeature(beforePreview);
@@ -509,6 +520,11 @@ export default {
 
         }
 
+        const openAddDialog = () => {
+            fenceInfo.value.editTime = getStandardTime(new Date().toISOString());
+            addFenceVisiable.value = true;
+        }
+
         let beforeFeatureId = "";
         let isExitEdit = false;
         const inEditFence = (editFence) => {
@@ -523,7 +539,7 @@ export default {
                 let feature = polygonInfo[editFence].feature;
                 fenceInfo.value.name = polygonInfo[editFence].name;
                 fenceInfo.value.operator = polygonInfo[editFence].operator;
-                fenceInfo.value.editTime = getTime(new Date());
+                fenceInfo.value.editTime = getStandardTime(new Date().toISOString());
 
                 beforeFeatureId = editFence;
                 polygonSource.removeFeature(feature);
@@ -571,52 +587,63 @@ export default {
         }
 
 
-        const sortMarker = (markerList) => {
-            let geometryPoints = [];
-            let maxXPointIdx = 0;
-            for (let i = 0; i < markerList.length; i++) {
-                let gp = {
-                    X: markerList[i][0],
-                    Y: markerList[i][1],
-                    slope: null,
-                };
+        // const sortMarker = (markerList) => {
+        //     let geometryPoints = [];
+        //     let maxXPointIdx = 0;
+        //     for (let i = 0; i < markerList.length; i++) {
+        //         let gp = {
+        //             X: markerList[i][0],
+        //             Y: markerList[i][1],
+        //             slope: null,
+        //         };
 
-                geometryPoints.push(gp);
-                if (geometryPoints[maxXPointIdx].X < gp.X) {
-                    maxXPointIdx = i;
-                } else if (geometryPoints[maxXPointIdx].X == gp.X && geometryPoints[maxXPointIdx].Y > gp.Y) {
-                    maxXPointIdx = i;
-                }
-            }
+        //         geometryPoints.push(gp);
+        //         if (geometryPoints[maxXPointIdx].X < gp.X) {
+        //             maxXPointIdx = i;
+        //         } else if (geometryPoints[maxXPointIdx].X == gp.X && geometryPoints[maxXPointIdx].Y > gp.Y) {
+        //             maxXPointIdx = i;
+        //         }
+        //     }
 
-            for (let i = 0; i < markerList.length; i++) {
-                if (i == maxXPointIdx) {
-                    geometryPoints[i].slope = 1e9;
-                } else {
-                    geometryPoints[i].slope = (geometryPoints[i].Y - geometryPoints[maxXPointIdx].Y) / (geometryPoints[i].X - geometryPoints[maxXPointIdx].X);
-                }
-            }
+        //     for (let i = 0; i < markerList.length; i++) {
+        //         if (i == maxXPointIdx) {
+        //             geometryPoints[i].slope = 1e9;
+        //         } else {
+        //             geometryPoints[i].slope = (geometryPoints[i].Y - geometryPoints[maxXPointIdx].Y) / (geometryPoints[i].X - geometryPoints[maxXPointIdx].X);
+        //         }
+        //     }
 
-            geometryPoints.sort(function (a, b) {
-                if (a.slope < b.slope) {
-                    return 1;
-                } else {
-                    return -1;
-                }
-            })
+        //     geometryPoints.sort(function (a, b) {
+        //         if (a.slope < b.slope) {
+        //             return 1;
+        //         } else {
+        //             return -1;
+        //         }
+        //     })
 
-            for (let i in geometryPoints) {
-                markerList[i] = [geometryPoints[i].X, geometryPoints[i].Y];
-            }
+        //     for (let i in geometryPoints) {
+        //         markerList[i] = [geometryPoints[i].X, geometryPoints[i].Y];
+        //     }
 
-        }
+        // }
 
         const deleteFence = (deleteFence) => {
             Modal.getInstance("#edit-fench").hide();
-            const fenceFeature = polygonInfo[deleteFence].feature;
-            store.commit("removeFence", deleteFence);
-            delete polygonInfo[deleteFence]
-            polygonSource.removeFeature(fenceFeature);
+            // const fenceFeature = polygonInfo[deleteFence].feature;
+
+            axios({
+                url: '/api/region/' + deleteFence + '/',
+                method: 'delete',
+                params: {
+                    id: deleteFence,
+                }
+            }).then(function (resp) {
+                console.log(resp);
+            })
+            // store.commit("removeFence", deleteFence);
+            // delete polygonInfo[deleteFence]
+            //polygonSource.removeFeature(fenceFeature);
+            refresh_polygonInfo();
         }
 
 
@@ -650,6 +677,14 @@ export default {
                 beforePreview = nowFeature;
                 polygonSource.addFeature(nowFeature);
             }
+        };
+
+        const inEditMessage = () => {
+            ElMessage({
+                message: '处于编辑状态中！',
+                type: 'warning',
+                duration: 2000,
+            })
         }
 
 
@@ -659,11 +694,15 @@ export default {
             inEditFence,
             exitEdit,
             deleteFence,
+            inEditMessage,
+            openAddDialog,
             editFenceName,
             fenceInfo,
             polygonInfo,
             confirmOperation,
             exitEditAble,
+            isDisabled,
+            addFenceVisiable,
         }
 
 

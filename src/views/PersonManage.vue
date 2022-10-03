@@ -1,91 +1,13 @@
 <template>
 
-    <div class="container" style="margin-top: 20px;">
+    <div class="container">
         <div class="row center-block">
             <div class="col-12">
                 <div class="card">
 
                     <div class="card-header">
-
-                        <button type="button" class="btn btn-outline-secondary float-end" data-bs-toggle="modal"
-                            data-bs-target="#add-bot-btn">添加人员</button>
-                        <div class="modal fade" id="add-bot-btn" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-xl">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="exampleModalLabel">添加人员</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <el-form :rules="rules" ref="ruleFormRef" :model="form" label-width="120px"
-                                            style="max-width: 500px">
-                                            <el-form-item label="id" width="100px">
-                                                <el-input v-model="form.id" />
-                                            </el-form-item>
-                                            <el-form-item label="新增人员" width="100px" :rules="[
-                                              { required: true, message: '请输入姓名', trigger: 'blur' },
-                                              { min: 1, max: 10, message: '姓名长度不合法', trigger: 'blur' },
-                                            ]">
-                                                <el-input v-model="form.name" />
-                                            </el-form-item>
-                                            <el-form-item label="选择分配围栏">
-                                                <el-select v-model="form.fenceId" placeholder="选择编号">
-                                                    <el-option label="抚琴街道" value="2" />
-                                                    <el-option label="编号2" value="beijing" />
-                                                </el-select>
-                                            </el-form-item>
-                                            <el-form-item label="职务" :rules="[
-                                              {
-                                                required: true,
-                                                message: '请输入职务',
-                                                trigger: 'blur',
-                                              },
-                                            ]">
-                                                <el-input v-model="form.title" />
-                                            </el-form-item>
-                                            <el-form-item label="街道" :rules=rules.street>
-                                                <el-input v-model="form.street" />
-                                            </el-form-item>
-                                            <el-form-item label="手机号" :rules="rules.tel">
-                                                <el-input v-model="form.tel" />
-                                            </el-form-item>
-                                            <el-form-item label="微信号" :rules="[
-                                              {
-                                                required: true,
-                                                message: '请输入人员的微信号',
-                                                trigger: 'blur',
-                                              },
-                                            ]">
-                                                <el-input v-model="form.vx" />
-                                            </el-form-item>
-
-
-                                            <!-- <el-form-item label="状态">
-      <el-radio-group v-model="form.work">
-        <el-radio label="执勤中" />
-        <el-radio label="休息中" />
-      </el-radio-group>
-    </el-form-item> -->
-
-                                            <el-form-item>
-                                                <el-button type="primary">添加
-                                                </el-button>
-                                                <el-button>取消</el-button>
-                                            </el-form-item>
-                                        </el-form>
-
-                                    </div>
-                                    <!-- <div class="modal-footer">
-                                        <div class="error-message">message</div>
-                                        <button type="button" class="btn btn-primary">创建</button>
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">取消</button>
-
-                                    </div> -->
-                                </div>
-                            </div>
-                        </div>
+                        <button type="button" class="btn btn-outline-secondary float-end"
+                            @click="addPerson()">添加人员</button>
                     </div>
                     <div class="card-body">
                         <el-table :data="personel" style="width: 100%" size="middle">
@@ -94,13 +16,17 @@
                             <el-table-column prop="phone" label="电话" width="140" />
                             <el-table-column prop="wechat" label="微信" width="200" />
                             <el-table-column prop="office" label="职务" width="120" />
-                            <el-table-column prop="fenchId" label="所处围栏" width="120" />
+                            <el-table-column prop="fenceName" label="所处围栏" width="120" />
                             <el-table-column prop="street" label="所处街道" width="200" />
-                            <el-table-column fixed="right" label="操作" width="280">
+                            <el-table-column fixed="right" label="操作" width="350">
                                 <template #default="scope">
                                     <el-button class="allocateFench" link size="small" type="primary" plain text
                                         style="font-size:14px; " @click="allocateFence(scope.$index)">
                                         分配围栏
+                                    </el-button>
+                                    <el-button class="allocateFench" link size="small" type="primary" plain text
+                                        style="font-size:14px;" @click="editInfo(scope.$index)">
+                                        编辑信息
                                     </el-button>
                                     <!-- <el-button
                                         
@@ -117,7 +43,8 @@
                                         <el-image class="logo-icon" :src="require('@/assets/img/wx_icon.png')"
                                             :size="35"></el-image>
                                     </el-button>
-                                    <el-button link size="small" type="danger" plain text style="font-size:14px">删除
+                                    <el-button link size="small" type="danger" plain text style="font-size:14px"
+                                        @click="removePerson(scope.$index)">删除
                                     </el-button>
                                 </template>
                             </el-table-column>
@@ -129,6 +56,52 @@
         </div>
 
     </div>
+
+    <el-dialog v-model="addPersonDialogVisible" title="添加人员" @close="exitAdd(addPersonFormRef)">
+        <template #default>
+            <el-form :rules="rules" ref="addPersonFormRef" :model="form" label-width="120px" style="max-width: 500px">
+                <el-form-item label="id" width="100px" prop="id">
+                    <el-input v-model="form.id" />
+                </el-form-item>
+                <el-form-item label="人员姓名" width="100px" :rules="rules.name" prop="name">
+                    <el-input v-model="form.name" />
+                </el-form-item>
+                <el-form-item label="选择分配围栏" prop="fenceName">
+                    <el-select v-model="form.fenceName" placeholder="选择编号">
+                        <el-option label="抚琴街道" value="2" />
+                        <el-option label="编号2" value="beijing" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="职务" :rules="rules.title" prop="office">
+                    <el-input v-model="form.office" />
+                </el-form-item>
+                <el-form-item label="街道" :rules="rules.street" prop="street">
+                    <el-input v-model="form.street" />
+                </el-form-item>
+                <el-form-item label="手机号" :rules="rules.tel" prop="phone">
+                    <el-input v-model="form.phone" />
+                </el-form-item>
+                <el-form-item label="微信号" :rules="rules.vx" prop="wechat">
+                    <el-input v-model="form.wechat" />
+                </el-form-item>
+
+
+                <!-- <el-form-item label="状态">
+      <el-radio-group v-model="form.work">
+        <el-radio label="执勤中" />
+        <el-radio label="休息中" />
+      </el-radio-group>
+    </el-form-item> -->
+            </el-form>
+        </template>
+        <template #footer>
+            <span class="dialog-footer">
+                <el-button type="primary" @click="confirmAddPerson(addPersonFormRef)">添加
+                </el-button>
+                <el-button @click="exitAdd(addPersonFormRef)">取消</el-button>
+            </span>
+        </template>
+    </el-dialog>
 
     <el-dialog v-model="dialogFormVisible" title="分配围栏">
         <template #default>
@@ -149,21 +122,74 @@
         </template>
     </el-dialog>
 
+    <el-dialog v-model="editInfoDialogVisible" title="编辑信息" @close="exitEdit(ruleFormRef)">
+        <template #default>
+            <el-form :rules="rules" ref="ruleFormRef" :model="form" label-width="120px" style="max-width: 500px">
+                <el-form-item label="id" width="100px" prop="id">
+                    <el-input v-model="form.id" />
+                </el-form-item>
+                <el-form-item label="人员姓名" width="100px" :rules="rules.name" prop="name">
+                    <el-input v-model="form.name" />
+                </el-form-item>
+                <el-form-item label="选择分配围栏" prop="fenceName">
+                    <el-select v-model="form.fenceName" placeholder="选择编号">
+                        <el-option label="抚琴街道" value="2" />
+                        <el-option label="编号2" value="beijing" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="职务" :rules="rules.title" prop="office">
+                    <el-input v-model="form.office" />
+                </el-form-item>
+                <el-form-item label="街道" :rules="rules.street" prop="street">
+                    <el-input v-model="form.street" />
+                </el-form-item>
+                <el-form-item label="手机号" :rules="rules.tel" prop="phone">
+                    <el-input v-model="form.phone" />
+                </el-form-item>
+                <el-form-item label="微信号" :rules="rules.vx" prop="wechat">
+                    <el-input v-model="form.wechat" />
+                </el-form-item>
+
+
+                <!-- <el-form-item label="状态">
+      <el-radio-group v-model="form.work">
+        <el-radio label="执勤中" />
+        <el-radio label="休息中" />
+      </el-radio-group>
+    </el-form-item> -->
+
+            </el-form>
+        </template>
+        <template #footer>
+            <span class="dialog-footer">
+                <el-button type="primary" @click="confirmEdit(ruleFormRef)">确认修改</el-button>
+                <el-button @click="exitEdit(ruleFormRef)">取消</el-button>
+            </span>
+        </template>
+    </el-dialog>
+
 </template>
 
 <script>
 import { reactive } from 'vue';
 import { ref } from 'vue';
 import { PhoneFilled } from "@element-plus/icons-vue";
+import _ from 'lodash';
 
 export default {
     setup() {
-        const dialogFormVisible = ref(false)
-        const personel = [
-            { id: 1, name: "张三", phone: 15617681182, wechat: "myWechat123", office: "大队长", fenchId: 1, street: "抚琴街道" },
-            { id: 2, name: "李四", phone: 15617681182, wechat: "myWechat4659876216", office: "队员", fenchId: 2, street: "抚琴街道" },
-            { id: 3, name: "王五", phone: 15617681182, wechat: "myWechat123", office: "队员", fenchId: 3, street: "抚琴街道" },
-        ];
+        const dialogFormVisible = ref(false);
+        const editInfoDialogVisible = ref(false);
+        const addPersonDialogVisible = ref(false);
+        const ruleFormRef = ref();
+        const addPersonFormRef = ref();
+
+
+        const personel = ref([
+            { id: '1', name: "张三", phone: '15617681182', wechat: "myWechat123", office: "大队长", fenceName: 'beijing', street: "抚琴街道" },
+            { id: '2', name: "李四", phone: '15617681182', wechat: "myWechat4659876216", office: "队员", fenceName: '2', street: "抚琴街道" },
+            { id: '3', name: "王五", phone: '15617681182', wechat: "myWechat123", office: "队员", fenceName: '2', street: "抚琴街道" },
+        ]);
 
         const tableDataFence = [
 
@@ -178,7 +204,7 @@ export default {
                 {
                     required: true,
                     message: '请输入职务',
-                    trigger: 'change',
+                    trigger: 'blur',
                 },
             ],
             street: [
@@ -199,7 +225,7 @@ export default {
                 {
                     required: true,
                     message: '请输入人员的微信号',
-                    trigger: 'change',
+                    trigger: 'blur',
                 },
             ],
 
@@ -208,19 +234,102 @@ export default {
         const form = reactive({
             id: '',
             name: '',
-            fenceId: '',
-            title: '',
-            tel: '',
-            vx: '',
+            fenceName: '',
+            office: '',
+            phone: '',
+            wechat: '',
             street: '',
             location: (location_default[Math.floor(Math.random() * 48)]).toString()
         })
 
+        const addPerson = () => {
+            addPersonDialogVisible.value = true;
+        }
+
+        const confirmAddPerson = (addPersonFormRef) => {
+            addPersonFormRef.validate((valid) => {
+                if (valid) {
+                    addPersonDialogVisible.value = false;
+
+                    const personInfo = _.cloneDeep(form);
+                    personel.value.push(personInfo);
+                }
+            })
+        }
+
+        const exitAdd = (addPersonFormRef) => {
+            addPersonDialogVisible.value = false;
+            addPersonFormRef.resetFields();
+        }
+
         function allocateFence(index) {
             dialogFormVisible.value = true
-            let person = personel.value[0].data
-            console.log(person[index].id)
+            // let person = personel.value[0].data
+            // console.log(person[index].id)
+            console.log(index);
         }
+
+        let editIndex;
+        const editInfo = (index) => {
+            const person = personel[index];
+            editIndex = index;
+
+            form.id = person.id;
+            form.name = person.name;
+            form.phone = person.phone;
+            form.wechat = person.wechat;
+            form.office = person.office;
+            form.street = person.street;
+            form.fenceName = person.fenceName;
+
+            editInfoDialogVisible.value = true;
+        }
+
+        const exitEdit = (formE1) => {
+
+            editInfoDialogVisible.value = false;
+
+            formE1.resetFields();
+            form.id = '';
+            form.name = '';
+            form.phone = '';
+            form.wechat = '';
+            form.office = '';
+            form.street = '';
+            form.fenceName = '';
+
+        }
+
+        const confirmEdit = (formEl) => {
+            formEl.validate((valid) => {
+                if (valid) {
+                    editInfoDialogVisible.value = false;
+                    let index = editIndex;
+
+                    personel[index].id = form.id;
+                    personel[index].name = form.name;
+                    personel[index].phone = form.phone;
+                    personel[index].wechat = form.wechat;
+                    personel[index].office = form.office;
+                    personel[index].street = form.street;
+                    personel[index].fenceName = form.fenceName;
+                }
+            })
+        }
+
+        const removePerson = (index) => {
+            personel.value.splice(index, 1);
+        }
+
+        // const click_page = page => {
+        //     if (page === -2) page = current_page - 1;
+        //     else if (page === -1) page = current_page + 1;
+        //     let max_pages = parseInt(Math.ceil(total_records / 10));
+
+        //     if (page >= 1 && page <= max_pages) {
+        //         // pull_page(page);
+        //     }
+        // }
 
 
         const handleClick = () => {
@@ -228,23 +337,38 @@ export default {
         }
 
         return {
-
+            editInfo,
             allocateFence,
             handleClick,
+            confirmEdit,
+            exitEdit,
+            confirmAddPerson,
+            exitAdd,
+            addPerson,
+            removePerson,
             rules,
             form,
             personel,
             dialogFormVisible,
-            tableDataFence
+            tableDataFence,
+            editInfoDialogVisible,
+            ruleFormRef,
+            addPersonFormRef,
+            addPersonDialogVisible,
+
         }
     },
     components: {
-        PhoneFilled
+        PhoneFilled,
     }
 }
 </script>
 
 <style scoped>
+.card {
+    margin-top: 8vh;
+}
+
 .allocateFench:hover {
     color: #A0D8FF;
 }

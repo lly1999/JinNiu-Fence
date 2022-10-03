@@ -84,8 +84,10 @@ img.navbar-icon {
 
 nav {
     position: absolute;
-    z-index: 5;
+    z-index: 20;
     width: 100vw;
+    height: 7vh;
     margin: 0;
+    padding: 0;
 }
 </style>
