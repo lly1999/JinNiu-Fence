@@ -250,6 +250,7 @@ let positionException = reactive({
     position: absolute;
     top: 7vh;
     z-index: 20;
+    user-select: none;
 }
 
 .content-l-top {
@@ -268,6 +269,7 @@ let positionException = reactive({
     z-index: 20;
     display: flex;
     flex-flow: wrap;
+    user-select: none;
 }
 
 .content-r {
@@ -284,6 +286,7 @@ let positionException = reactive({
     position: absolute;
     top: 7vh;
     z-index: 20;
+    user-select: none;
 }
 
 .person-box {
