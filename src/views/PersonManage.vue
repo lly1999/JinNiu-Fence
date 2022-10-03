@@ -5,25 +5,42 @@
             <div class="col-12">
                 <div class="card">
 
-                    <div class="card-header">
-                        <button type="button" class="btn btn-outline-secondary float-end"
+                    <div class="card-header" style="display: flex;">
+                        <div class="col-3" style="margin-right:30px;">
+                            <el-input placeholder="请输入人员姓名" clearable size="large">
+                                <template #append>
+                                    <el-button @click="searchPatrol()">
+                                        <el-icon>
+                                            <Search />
+                                        </el-icon>
+                                    </el-button>
+
+                                </template>
+                            </el-input>
+                        </div>
+
+                        <button type="button" class="btn btn-outline-primary float-end"
                             @click="addPerson()">添加人员</button>
                     </div>
                     <div class="card-body">
-                        <el-table :data="personel" style="width: 100%" size="middle">
-                            <el-table-column prop="id" label="id" width="150" />
-                            <el-table-column prop="name" label="姓名" width="120" />
-                            <el-table-column prop="phone" label="电话" width="140" />
-                            <el-table-column prop="wechat" label="微信" width="200" />
-                            <el-table-column prop="office" label="职务" width="120" />
-                            <el-table-column prop="fenceName" label="所处围栏" width="120" />
-                            <el-table-column prop="street" label="所处街道" width="200" />
-                            <el-table-column fixed="right" label="操作" width="350">
+                        <el-table :data="patrolList" style="width: 100%" size="middle">
+                            <!-- <el-table-column prop="id" label="id" width="150" /> -->
+                            <el-table-column prop="name" label="姓名" width="120" header-align="center" align="center" />
+                            <el-table-column prop="identity" label="职务" width="120" header-align="center"
+                                align="center" />
+                            <el-table-column prop="regionName" label="所处围栏" width="120" header-align="center"
+                                align="center" />
+                            <el-table-column prop="department" label="部门" width="140" header-align="center"
+                                align="center" />
+                            <el-table-column prop="task" label="任务" width="200" header-align="center" align="center" />
+                            <el-table-column prop="telephone" label="电话" width="140" header-align="center"
+                                align="center" />
+                            <el-table-column prop="wechat" label="微信" width="200" header-align="center"
+                                align="center" />
+
+
+                            <el-table-column fixed="right" label="操作" width="300" header-align="center" align="center">
                                 <template #default="scope">
-                                    <el-button class="allocateFench" link size="small" type="primary" plain text
-                                        style="font-size:14px; " @click="allocateFence(scope.$index)">
-                                        分配围栏
-                                    </el-button>
                                     <el-button class="allocateFench" link size="small" type="primary" plain text
                                         style="font-size:14px;" @click="editInfo(scope.$index)">
                                         编辑信息
@@ -60,29 +77,37 @@
     <el-dialog v-model="addPersonDialogVisible" title="添加人员" @close="exitAdd(addPersonFormRef)">
         <template #default>
             <el-form :rules="rules" ref="addPersonFormRef" :model="form" label-width="120px" style="max-width: 500px">
-                <el-form-item label="id" width="100px" prop="id">
+                <!-- <el-form-item label="id" width="100px" prop="id">
                     <el-input v-model="form.id" />
-                </el-form-item>
+                </el-form-item> -->
                 <el-form-item label="人员姓名" width="100px" :rules="rules.name" prop="name">
                     <el-input v-model="form.name" />
                 </el-form-item>
                 <el-form-item label="选择分配围栏" prop="fenceName">
-                    <el-select v-model="form.fenceName" placeholder="选择编号">
-                        <el-option label="抚琴街道" value="2" />
-                        <el-option label="编号2" value="beijing" />
+                    <el-select v-model="form.fenceName" placeholder="选择围栏">
+                        <el-option v-for="polygon in polygonInfo" :key="polygon.id" :label="polygon.name"
+                            :value="polygon.id" />
                     </el-select>
                 </el-form-item>
                 <el-form-item label="职务" :rules="rules.title" prop="office">
-                    <el-input v-model="form.office" />
+                    <!-- <el-input v-model="form.office" /> -->
+                    <el-radio-group v-model="form.office" class="ml-4">
+                        <el-radio label="执法人员">执法人员</el-radio>
+                        <el-radio label="协管人员">协管人员</el-radio>
+                    </el-radio-group>
                 </el-form-item>
-                <el-form-item label="街道" :rules="rules.street" prop="street">
-                    <el-input v-model="form.street" />
+                <el-form-item label="部门" :rules="rules.street" prop="department">
+                    <el-input v-model="form.department" />
                 </el-form-item>
+
                 <el-form-item label="手机号" :rules="rules.tel" prop="phone">
                     <el-input v-model="form.phone" />
                 </el-form-item>
                 <el-form-item label="微信号" :rules="rules.vx" prop="wechat">
                     <el-input v-model="form.wechat" />
+                </el-form-item>
+                <el-form-item label="任务负责" prop="task">
+                    <el-input v-model="form.task" />
                 </el-form-item>
 
 
@@ -125,23 +150,27 @@
     <el-dialog v-model="editInfoDialogVisible" title="编辑信息" @close="exitEdit(ruleFormRef)">
         <template #default>
             <el-form :rules="rules" ref="ruleFormRef" :model="form" label-width="120px" style="max-width: 500px">
-                <el-form-item label="id" width="100px" prop="id">
-                    <el-input v-model="form.id" />
-                </el-form-item>
                 <el-form-item label="人员姓名" width="100px" :rules="rules.name" prop="name">
                     <el-input v-model="form.name" />
                 </el-form-item>
                 <el-form-item label="选择分配围栏" prop="fenceName">
-                    <el-select v-model="form.fenceName" placeholder="选择编号">
-                        <el-option label="抚琴街道" value="2" />
-                        <el-option label="编号2" value="beijing" />
+                    <el-select v-model="form.fenceName" placeholder="选择围栏">
+                        <el-option v-for="polygon in polygonInfo" :key="polygon.id" :label="polygon.name"
+                            :value="polygon.id" />
                     </el-select>
                 </el-form-item>
                 <el-form-item label="职务" :rules="rules.title" prop="office">
-                    <el-input v-model="form.office" />
+                    <!-- <el-select v-model="form.office" placeholder="选择职务">
+                        <el-option label="执法人员" value="执法人员" />
+                        <el-option label="协管人员" value="协管人员" />
+                    </el-select> -->
+                    <el-radio-group v-model="form.office" class="ml-4">
+                        <el-radio label="执法人员">执法人员</el-radio>
+                        <el-radio label="协管人员">协管人员</el-radio>
+                    </el-radio-group>
                 </el-form-item>
-                <el-form-item label="街道" :rules="rules.street" prop="street">
-                    <el-input v-model="form.street" />
+                <el-form-item label="部门" :rules="rules.street" prop="department">
+                    <el-input v-model="form.department" />
                 </el-form-item>
                 <el-form-item label="手机号" :rules="rules.tel" prop="phone">
                     <el-input v-model="form.phone" />
@@ -149,7 +178,9 @@
                 <el-form-item label="微信号" :rules="rules.vx" prop="wechat">
                     <el-input v-model="form.wechat" />
                 </el-form-item>
-
+                <el-form-item label="任务负责" prop="task">
+                    <el-input v-model="form.task" />
+                </el-form-item>
 
                 <!-- <el-form-item label="状态">
       <el-radio-group v-model="form.work">
@@ -173,8 +204,9 @@
 <script>
 import { reactive } from 'vue';
 import { ref } from 'vue';
-import { PhoneFilled } from "@element-plus/icons-vue";
-import _ from 'lodash';
+import { PhoneFilled, Search } from "@element-plus/icons-vue";
+// import _ from 'lodash';
+import axios from 'axios';
 
 export default {
     setup() {
@@ -183,17 +215,7 @@ export default {
         const addPersonDialogVisible = ref(false);
         const ruleFormRef = ref();
         const addPersonFormRef = ref();
-
-
-        const personel = ref([
-            { id: '1', name: "张三", phone: '15617681182', wechat: "myWechat123", office: "大队长", fenceName: 'beijing', street: "抚琴街道" },
-            { id: '2', name: "李四", phone: '15617681182', wechat: "myWechat4659876216", office: "队员", fenceName: '2', street: "抚琴街道" },
-            { id: '3', name: "王五", phone: '15617681182', wechat: "myWechat123", office: "队员", fenceName: '2', street: "抚琴街道" },
-        ]);
-
-        const tableDataFence = [
-
-        ]
+        const queryName = ref("");
 
         const rules = reactive({
             name: [
@@ -207,6 +229,7 @@ export default {
                     trigger: 'blur',
                 },
             ],
+
             street: [
                 {
                     required: true,
@@ -235,7 +258,7 @@ export default {
             id: '',
             name: '',
             fenceName: '',
-            office: '',
+            office: ref(''),
             department: '',
             task: '',
             phone: '',
@@ -243,6 +266,76 @@ export default {
             street: '',
             location: (location_default[Math.floor(Math.random() * 48)]).toString()
         })
+
+        let polygonInfo = {};
+        const getFenceList = () => {
+            axios({
+                url: "/api/region",
+                method: "get"
+            }).then(function (resp) {
+                for (const item of resp.data.data) {
+                    if (item.pointList.length >= 3) {
+                        polygonInfo[item.id] = {
+                            id: item.id,
+                            name: item.name,
+                        }
+                    }
+
+                }
+            })
+        }
+        getFenceList();
+
+        let patrolInfo = reactive({});
+        let patrolList = reactive([]);
+        const getPatrolList = () => {
+            Object.keys(patrolInfo).map(key => {
+                delete patrolInfo[key]
+            });
+            patrolList.splice(0, patrolList.length);
+
+            axios({
+                url: '/api/patrol',
+                method: 'get'
+            }).then(function (resp) {
+                // console.log(resp);
+                if (resp.status == 200) {
+                    for (let item of resp.data.data) {
+                        let relatedRegion;
+                        let regionName;
+                        if (item.relatedRegion == null) {
+                            relatedRegion = "暂未分配";
+                            regionName = "暂未分配";
+                        } else {
+                            relatedRegion = item.relatedRegion
+                            regionName = polygonInfo[relatedRegion].name
+                        }
+
+                        let task;
+                        if (item.task == null) {
+                            task = "暂无";
+                        } else {
+                            task = item.task;
+                        }
+
+                        let patrol = {
+                            id: item.id,
+                            name: item.name,
+                            department: item.department,
+                            relatedRegion: relatedRegion,
+                            regionName: regionName,
+                            telephone: item.telephone,
+                            wechat: item.wechat,
+                            identity: item.identity,
+                            task: task,
+                        }
+                        patrolInfo[item.id] = patrol;
+                        patrolList.push(patrol);
+                    }
+                }
+            })
+        }
+        getPatrolList();
 
         const addPerson = () => {
             addPersonDialogVisible.value = true;
@@ -253,8 +346,24 @@ export default {
                 if (valid) {
                     addPersonDialogVisible.value = false;
 
-                    const personInfo = _.cloneDeep(form);
-                    personel.value.push(personInfo);
+                    axios({
+                        url: "/api/patrol",
+                        method: 'post',
+                        data: {
+                            name: form.name,
+                            relatedRegion: form.fenceName,
+                            identity: form.office,
+                            department: form.department,
+                            telephone: form.phone,
+                            wechat: form.wechat,
+                            task: form.task,
+                        }
+
+                    }).then(function () {
+
+                        getPatrolList();
+                    })
+
                 }
             })
         }
@@ -264,25 +373,29 @@ export default {
             addPersonFormRef.resetFields();
         }
 
-        function allocateFence(index) {
-            dialogFormVisible.value = true
-            // let person = personel.value[0].data
-            // console.log(person[index].id)
-            console.log(index);
-        }
-
         let editIndex;
         const editInfo = (index) => {
-            const person = personel[index];
+
+            let editId = patrolList[index].id;
             editIndex = index;
 
-            form.id = person.id;
-            form.name = person.name;
-            form.phone = person.phone;
-            form.wechat = person.wechat;
-            form.office = person.office;
-            form.street = person.street;
-            form.fenceName = person.fenceName;
+            form.id = patrolInfo[editId].id;
+            form.name = patrolInfo[editId].name;
+            form.phone = patrolInfo[editId].telephone;
+            form.wechat = patrolInfo[editId].wechat;
+            form.office = patrolInfo[editId].identity;
+            if (patrolInfo[editId].regionName == "暂未分配") {
+                form.fenceName = "";
+            } else {
+                form.fenceName = patrolInfo[editId].regionName;
+            }
+
+            if (patrolInfo[editId].task == "暂无") {
+                form.task = "";
+            } else {
+                form.task = patrolInfo[editId].task;
+            }
+            form.department = patrolInfo[editId].department;
 
             editInfoDialogVisible.value = true;
         }
@@ -297,8 +410,8 @@ export default {
             form.phone = '';
             form.wechat = '';
             form.office = '';
-            form.street = '';
             form.fenceName = '';
+            form.department = '';
 
         }
 
@@ -308,19 +421,45 @@ export default {
                     editInfoDialogVisible.value = false;
                     let index = editIndex;
 
-                    personel[index].id = form.id;
-                    personel[index].name = form.name;
-                    personel[index].phone = form.phone;
-                    personel[index].wechat = form.wechat;
-                    personel[index].office = form.office;
-                    personel[index].street = form.street;
-                    personel[index].fenceName = form.fenceName;
+                    axios({
+                        url: "/api/patrol",
+                        method: 'post',
+                        data: {
+                            id: patrolList[index].id,
+                            name: form.name,
+                            relatedRegion: form.fenceName,
+                            identity: form.office,
+                            department: form.department,
+                            telephone: form.phone,
+                            wechat: form.wechat,
+                            task: form.task,
+                        }
+                    }).then(function (resp) {
+                        console.log(resp);
+                        getPatrolList();
+                    })
+
                 }
             })
         }
 
         const removePerson = (index) => {
-            personel.value.splice(index, 1);
+            let removeId = patrolList[index].id;
+            axios({
+                url: '/api/patrol/' + removeId,
+                method: 'delete',
+                params: {
+                    id: removeId,
+                }
+            }).then(function () {
+
+                getPatrolList();
+            })
+
+        }
+
+        const searchPatrol = () => {
+
         }
 
         // const click_page = page => {
@@ -334,34 +473,30 @@ export default {
         // }
 
 
-        const handleClick = () => {
-            console.log('click')
-        }
-
         return {
             editInfo,
-            allocateFence,
-            handleClick,
             confirmEdit,
             exitEdit,
             confirmAddPerson,
             exitAdd,
             addPerson,
             removePerson,
+            searchPatrol,
             rules,
             form,
-            personel,
             dialogFormVisible,
-            tableDataFence,
             editInfoDialogVisible,
             ruleFormRef,
             addPersonFormRef,
             addPersonDialogVisible,
-
+            polygonInfo,
+            patrolList,
+            queryName,
         }
     },
     components: {
         PhoneFilled,
+        Search,
     }
 }
 </script>
