@@ -85,7 +85,7 @@
                 </el-form-item>
                 <el-form-item label="选择分配围栏" prop="fenceName">
                     <el-select v-model="form.fenceName" placeholder="选择围栏">
-                        <el-option v-for="polygon in polygonInfo" :key="polygon.id" :label="polygon.name"
+                        <el-option v-for="polygon in polygons" :key="polygon.id" :label="polygon.name"
                             :value="polygon.id" />
                     </el-select>
                 </el-form-item>
@@ -155,7 +155,7 @@
                 </el-form-item>
                 <el-form-item label="选择分配围栏" prop="fenceName">
                     <el-select v-model="form.fenceName" placeholder="选择围栏">
-                        <el-option v-for="polygon in polygonInfo" :key="polygon.id" :label="polygon.name"
+                        <el-option v-for="polygon in polygons" :key="polygon.id" :label="polygon.name"
                             :value="polygon.id" />
                     </el-select>
                 </el-form-item>
@@ -203,7 +203,7 @@
 
 <script>
 import { reactive } from 'vue';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { PhoneFilled, Search } from "@element-plus/icons-vue";
 // import _ from 'lodash';
 import axios from 'axios';
@@ -267,28 +267,29 @@ export default {
             location: (location_default[Math.floor(Math.random() * 48)]).toString()
         })
 
-        let polygonInfo = {};
-        const getFenceList = () => {
+        let polygons = reactive({});
+        const initPatrolList = () => {
             axios({
                 url: "/api/region",
                 method: "get"
             }).then(function (resp) {
                 for (const item of resp.data.data) {
                     if (item.pointList.length >= 3) {
-                        polygonInfo[item.id] = {
+                        polygons[item.id] = {
                             id: item.id,
                             name: item.name,
                         }
+                        console.log(polygons[item.id]);
                     }
-
                 }
+                getPatrolList();
             })
         }
-        getFenceList();
 
         let patrolInfo = reactive({});
         let patrolList = reactive([]);
         const getPatrolList = () => {
+
             Object.keys(patrolInfo).map(key => {
                 delete patrolInfo[key]
             });
@@ -298,17 +299,19 @@ export default {
                 url: '/api/patrol',
                 method: 'get'
             }).then(function (resp) {
-                // console.log(resp);
+
                 if (resp.status == 200) {
                     for (let item of resp.data.data) {
                         let relatedRegion;
                         let regionName;
+
                         if (item.relatedRegion == null) {
                             relatedRegion = "暂未分配";
                             regionName = "暂未分配";
                         } else {
-                            relatedRegion = item.relatedRegion
-                            regionName = polygonInfo[relatedRegion].name
+                            relatedRegion = item.relatedRegion;
+                            console.log(typeof item.relatedRegion);
+                            regionName = polygons[relatedRegion]["name"];
                         }
 
                         let task;
@@ -335,7 +338,6 @@ export default {
                 }
             })
         }
-        getPatrolList();
 
         const addPerson = () => {
             addPersonDialogVisible.value = true;
@@ -361,7 +363,7 @@ export default {
 
                     }).then(function () {
 
-                        getPatrolList();
+                        initPatrolList();
                     })
 
                 }
@@ -436,7 +438,7 @@ export default {
                         }
                     }).then(function (resp) {
                         console.log(resp);
-                        getPatrolList();
+                        initPatrolList();
                     })
 
                 }
@@ -453,7 +455,7 @@ export default {
                 }
             }).then(function () {
 
-                getPatrolList();
+                initPatrolList();
             })
 
         }
@@ -473,6 +475,11 @@ export default {
         // }
 
 
+        onMounted(() => {
+            initPatrolList();
+        });
+
+
         return {
             editInfo,
             confirmEdit,
@@ -489,7 +496,7 @@ export default {
             ruleFormRef,
             addPersonFormRef,
             addPersonDialogVisible,
-            polygonInfo,
+            polygons,
             patrolList,
             queryName,
         }
