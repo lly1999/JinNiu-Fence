@@ -7,7 +7,7 @@
 
                     <div class="card-header" style="display: flex;">
                         <div class="col-3" style="margin-right:30px;">
-                            <el-input placeholder="请输入人员姓名" clearable size="large">
+                            <el-input v-model="queryName" placeholder="请输入人员姓名" clearable size="large">
                                 <template #append>
                                     <el-button @click="searchPatrol()">
                                         <el-icon>
@@ -19,11 +19,15 @@
                             </el-input>
                         </div>
 
+                        <button v-if="ifShowQueryResult" type="button" class="btn btn-outline-secondary float-end"
+                            @click="backToFirstPage()" style="margin-right:30px;">返回</button>
+
                         <button type="button" class="btn btn-outline-primary float-end"
                             @click="addPerson()">添加人员</button>
                     </div>
                     <div class="card-body">
-                        <el-table :data="patrolList" style="width: 100%" size="middle">
+                        <el-table :data="ifShowQueryResult ? queryResultList: patrolList" style="width: 100%"
+                            size="middle" :empty-text="ifShowQueryResult? '未找到该人员': 'Loading...'">
                             <!-- <el-table-column prop="id" label="id" width="150" /> -->
                             <el-table-column prop="name" label="姓名" width="120" header-align="center" align="center" />
                             <el-table-column prop="identity" label="职务" width="120" header-align="center"
@@ -203,7 +207,7 @@
 
 <script>
 import { reactive } from 'vue';
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { PhoneFilled, Search } from "@element-plus/icons-vue";
 // import _ from 'lodash';
 import axios from 'axios';
@@ -216,6 +220,7 @@ export default {
         const ruleFormRef = ref();
         const addPersonFormRef = ref();
         const queryName = ref("");
+        const ifShowQueryResult = ref(false);
 
         const rules = reactive({
             name: [
@@ -269,6 +274,9 @@ export default {
 
         let polygons = reactive({});
         const initPatrolList = () => {
+            Object.keys(polygons).map(key => {
+                delete polygons[key]
+            });
             axios({
                 url: "/api/region",
                 method: "get"
@@ -279,12 +287,12 @@ export default {
                             id: item.id,
                             name: item.name,
                         }
-                        console.log(polygons[item.id]);
                     }
                 }
                 getPatrolList();
             })
         }
+        initPatrolList();
 
         let patrolInfo = reactive({});
         let patrolList = reactive([]);
@@ -310,7 +318,6 @@ export default {
                             regionName = "暂未分配";
                         } else {
                             relatedRegion = item.relatedRegion;
-                            console.log(typeof item.relatedRegion);
                             regionName = polygons[relatedRegion]["name"];
                         }
 
@@ -436,8 +443,7 @@ export default {
                             wechat: form.wechat,
                             task: form.task,
                         }
-                    }).then(function (resp) {
-                        console.log(resp);
+                    }).then(function () {
                         initPatrolList();
                     })
 
@@ -460,8 +466,58 @@ export default {
 
         }
 
+        let queryResultList = reactive([])
         const searchPatrol = () => {
+            axios({
+                url: '/api/patrol/name/' + queryName.value,
+                method: 'get',
+                params: {
+                    name: queryName.value
+                }
+            }).then(function (resp) {
+                if (resp.status == 200) {
+                    for (let item of resp.data.data) {
+                        let relatedRegion;
+                        let regionName;
 
+                        if (item.relatedRegion == null) {
+                            relatedRegion = "暂未分配";
+                            regionName = "暂未分配";
+                        } else {
+                            relatedRegion = item.relatedRegion;
+                            regionName = polygons[relatedRegion]["name"];
+                        }
+
+                        let task;
+                        if (item.task == null) {
+                            task = "暂无";
+                        } else {
+                            task = item.task;
+                        }
+
+                        let patrol = {
+                            id: item.id,
+                            name: item.name,
+                            department: item.department,
+                            relatedRegion: relatedRegion,
+                            regionName: regionName,
+                            telephone: item.telephone,
+                            wechat: item.wechat,
+                            identity: item.identity,
+                            task: task,
+                        }
+
+                        queryResultList.push(patrol);
+                    }
+                }
+                ifShowQueryResult.value = true;
+                queryName.value = "";
+            })
+        }
+
+        const backToFirstPage = () => {
+            ifShowQueryResult.value = false;
+            // initPatrolList();
         }
 
         // const click_page = page => {
@@ -474,10 +530,9 @@ export default {
         //     }
         // }
 
-
-        onMounted(() => {
-            initPatrolList();
-        });
+        // onMounted(() => {
+        //     initPatrolList();
+        // });
 
 
         return {
@@ -489,6 +544,7 @@ export default {
             addPerson,
             removePerson,
             searchPatrol,
+            backToFirstPage,
             rules,
             form,
             dialogFormVisible,
@@ -499,6 +555,8 @@ export default {
             polygons,
             patrolList,
             queryName,
+            ifShowQueryResult,
+            queryResultList,
         }
     },
     components: {
