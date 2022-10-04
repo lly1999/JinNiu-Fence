@@ -126,6 +126,7 @@ import { ElMessage } from 'element-plus';
 import 'element-plus/theme-chalk/el-message.css';
 import axios from 'axios'
 import { stringToList, getStandardTime, getTTime, sortPoint } from '../scripts/utils'
+import { jinNiuFencePath } from '../scripts/constant'
 
 export default {
 
@@ -151,21 +152,12 @@ export default {
         let content;
         let popup;
 
-        // function getStandardTime(time) {
-        //     // `8 * 3600 * 1000 补充时差` 北京东八区所以补八个小时 
-        //     return new Date(+new Date(time) + 8 * 3600 * 1000).toISOString().replace(/T/g, ' ').replace(/\.[\d]{3}Z/, '')
-        // }
-
-        // const getTTime = (time) => {
-        //     return new Date(+new Date(time) + 8 * 3600 * 1000).toISOString();
-        // }
-
         const initMap = () => {
             let terMap = new Map({
                 target: "olMap",
                 view: new View({
-                    center: [104.04396204, 30.71499549],
-                    zoom: 13,
+                    center: [104.05396204, 30.74499549],
+                    zoom: 12.8,
                     projection: "EPSG:4326",
                 }),
             });
@@ -226,10 +218,25 @@ export default {
             createIconLayer();
             createPolygonLayer();
 
+            for (const path of jinNiuFencePath) {
+                const tmp = new Polygon(path);
+                let oltarget = new Feature(tmp);
+                oltarget.setStyle(
+
+                    new Style({
+                        fill: new Fill({ color: 'rgba(255, 236, 139, 0.5)' }),
+                        stroke: new Stroke({
+                            lineDash: [10, 10, 10, 10],
+                            color: "red",
+                            width: 1,
+                        })
+                    })
+                );
+                polygonSource.addFeature(oltarget);
+            }
+
             refresh_polygonInfo();
-
             createOverlayClick();
-
         }
 
         let markerInfo = reactive({});     // 存放每次创建或编辑中的点信息
@@ -267,7 +274,6 @@ export default {
                         markList: pointList,
                         feature: polygonFeature
                     }
-                    console.log(pointList);
                 }
             })
         }
@@ -424,8 +430,9 @@ export default {
 
         }
 
+        let num = 0;
         const createPolygonFeature = (markerList) => {
-
+            const color = ['rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)', 'rgba(255, 0, 0, 0.5)', 'rgbs(255, 255, 0, 0.5)'];
             let oltarget;
 
             if (markerList.length < 3) {
@@ -440,7 +447,7 @@ export default {
             oltarget = new Feature(tmp);
             oltarget.setStyle(
                 new Style({
-                    fill: new Fill({ color: "#4e98f444" }),
+                    fill: new Fill({ color: color[num % 4] }),
                     stroke: new Stroke({
                         lineDash: [10, 10, 10, 10],
                         color: "#4e98f444",
@@ -448,6 +455,7 @@ export default {
                     })
                 })
             );
+            num++;
             return oltarget;
         }
 
