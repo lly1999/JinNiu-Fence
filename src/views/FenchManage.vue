@@ -267,6 +267,7 @@ export default {
                         markList: pointList,
                         feature: polygonFeature
                     }
+                    console.log(pointList);
                 }
             })
         }
