@@ -26,24 +26,25 @@
                             @click="addPerson()">添加人员</button>
                     </div>
                     <div class="card-body">
-                        <el-table :data="ifShowQueryResult ? queryResultList: patrolList" style="width: 100%"
-                            size="middle" :empty-text="ifShowQueryResult? '未找到该人员': 'Loading...'">
+                        <el-table :data="ifShowQueryResult ? queryResultList: patrols"
+                            style="width: 100%; font-size: 18px;" size="large"
+                            :empty-text="ifShowQueryResult? '未找到该人员': 'Loading...'">
                             <!-- <el-table-column prop="id" label="id" width="150" /> -->
                             <el-table-column prop="name" label="姓名" width="120" header-align="center" align="center" />
                             <el-table-column prop="identity" label="职务" width="120" header-align="center"
                                 align="center" />
                             <el-table-column prop="regionName" label="所处围栏" width="120" header-align="center"
                                 align="center" />
-                            <el-table-column prop="department" label="部门" width="140" header-align="center"
+                            <el-table-column prop="department" label="部门" width="120" header-align="center"
                                 align="center" />
-                            <el-table-column prop="task" label="任务" width="200" header-align="center" align="center" />
-                            <el-table-column prop="telephone" label="电话" width="140" header-align="center"
+                            <el-table-column prop="task" label="任务" width="160" header-align="center" align="center" />
+                            <el-table-column prop="telephone" label="电话" width="160" header-align="center"
                                 align="center" />
                             <el-table-column prop="wechat" label="微信" width="200" header-align="center"
                                 align="center" />
 
 
-                            <el-table-column fixed="right" label="操作" width="300" header-align="center" align="center">
+                            <el-table-column fixed="right" label="操作" width="280" header-align="center" align="center">
                                 <template #default="scope">
                                     <el-button class="allocateFench" link size="small" type="primary" plain text
                                         style="font-size:14px;" @click="editInfo(scope.$index)">
@@ -70,8 +71,28 @@
                                 </template>
                             </el-table-column>
                         </el-table>
+                        <nav v-if="!ifShowQueryResult" aria-label="...">
+                            <ul class="pagination" style="float: right; margin-top: 20px;">
+                                <li class="page-item" @click="click_page(-2)">
+                                    <a class="page-link" href="#">前一页</a>
+                                </li>
+                                <li :class="'page-item ' + page.is_active" v-for="page in pages" :key="page.number"
+                                    @click="click_page(page.number)">
+                                    <a class="page-link" href="#">{{ page.number }}</a>
+                                </li>
 
+                                <li class="page-item" @click="click_page(-1)">
+                                    <a class="page-link" href="#">后一页</a>
+                                </li>
+                            </ul>
+                        </nav>
+
+                        <!-- <div class="example-pagination-block">
+                            <el-pagination layout="prev, pager, next" :total="3" :page-size="2" />
+                        </div> -->
                     </div>
+
+
                 </div>
             </div>
         </div>
@@ -202,6 +223,8 @@
             </span>
         </template>
     </el-dialog>
+
+
 
 </template>
 
@@ -421,7 +444,6 @@ export default {
             form.office = '';
             form.fenceName = '';
             form.department = '';
-
         }
 
         const confirmEdit = (formEl) => {
@@ -468,51 +490,56 @@ export default {
 
         let queryResultList = reactive([])
         const searchPatrol = () => {
-            axios({
-                url: '/api/patrol/name/' + queryName.value,
-                method: 'get',
-                params: {
-                    name: queryName.value
-                }
-            }).then(function (resp) {
-                if (resp.status == 200) {
-                    for (let item of resp.data.data) {
-                        let relatedRegion;
-                        let regionName;
 
-                        if (item.relatedRegion == null) {
-                            relatedRegion = "暂未分配";
-                            regionName = "暂未分配";
-                        } else {
-                            relatedRegion = item.relatedRegion;
-                            regionName = polygons[relatedRegion]["name"];
-                        }
-
-                        let task;
-                        if (item.task == null) {
-                            task = "暂无";
-                        } else {
-                            task = item.task;
-                        }
-
-                        let patrol = {
-                            id: item.id,
-                            name: item.name,
-                            department: item.department,
-                            relatedRegion: relatedRegion,
-                            regionName: regionName,
-                            telephone: item.telephone,
-                            wechat: item.wechat,
-                            identity: item.identity,
-                            task: task,
-                        }
-
-                        queryResultList.push(patrol);
+            queryName.value = queryName.value.trim();
+            if (queryName.value != "") {
+                axios({
+                    url: '/api/patrol/name/' + queryName.value,
+                    method: 'get',
+                    params: {
+                        name: queryName.value
                     }
-                }
-                ifShowQueryResult.value = true;
-                queryName.value = "";
-            })
+                }).then(function (resp) {
+                    if (resp.status == 200) {
+                        for (let item of resp.data.data) {
+                            let relatedRegion;
+                            let regionName;
+
+                            if (item.relatedRegion == null) {
+                                relatedRegion = "暂未分配";
+                                regionName = "暂未分配";
+                            } else {
+                                relatedRegion = item.relatedRegion;
+                                regionName = polygons[relatedRegion]["name"];
+                            }
+
+                            let task;
+                            if (item.task == null) {
+                                task = "暂无";
+                            } else {
+                                task = item.task;
+                            }
+
+                            let patrol = {
+                                id: item.id,
+                                name: item.name,
+                                department: item.department,
+                                relatedRegion: relatedRegion,
+                                regionName: regionName,
+                                telephone: item.telephone,
+                                wechat: item.wechat,
+                                identity: item.identity,
+                                task: task,
+                            }
+
+                            queryResultList.push(patrol);
+                        }
+                    }
+                    ifShowQueryResult.value = true;
+                    queryName.value = "";
+                })
+            }
+
         }
 
         const backToFirstPage = () => {
@@ -520,20 +547,85 @@ export default {
             // initPatrolList();
         }
 
-        // const click_page = page => {
-        //     if (page === -2) page = current_page - 1;
-        //     else if (page === -1) page = current_page + 1;
-        //     let max_pages = parseInt(Math.ceil(total_records / 10));
+        let total_records = 0;
+        let current_page = 1;
+        let pages = ref([]);
+        let patrols = ref([]);
+        let pageNum = 10;
+        const pull_page = page => {
+            current_page = page;
+            axios({
+                url: '/api/patrol/page',
+                method: 'get',
+                params: {
+                    pageNum: page,
+                    pageSize: pageNum,
+                }
+            }).then(function (resp) {
+                patrols.value.splice(0, patrols.value.length);
+                total_records = resp.data.data.total;
 
-        //     if (page >= 1 && page <= max_pages) {
-        //         // pull_page(page);
-        //     }
-        // }
+                for (let item of resp.data.data.records) {
+                    let relatedRegion;
+                    let regionName;
 
-        // onMounted(() => {
-        //     initPatrolList();
-        // });
+                    if (item.relatedRegion == null) {
+                        relatedRegion = "暂未分配";
+                        regionName = "暂未分配";
+                    } else {
+                        relatedRegion = item.relatedRegion;
+                        regionName = polygons[relatedRegion]["name"];
+                    }
 
+                    let task;
+                    if (item.task == null || item.task == '') {
+                        task = "暂无";
+                    } else {
+                        task = item.task;
+                    }
+
+                    let patrol = {
+                        id: item.id,
+                        name: item.name,
+                        department: item.department,
+                        relatedRegion: relatedRegion,
+                        regionName: regionName,
+                        telephone: item.telephone,
+                        wechat: item.wechat,
+                        identity: item.identity,
+                        task: task,
+                    }
+                    patrols.value.push(patrol);
+                }
+                // patrols.value = resp.data.data.records;
+                update_pages();
+            })
+        }
+
+        const update_pages = () => {
+            let max_pages = parseInt(Math.ceil(total_records / pageNum));
+            let new_pages = [];
+            for (let i = current_page - 2; i <= current_page + 2; i++) {
+                if (i >= 1 && i <= max_pages) {
+                    new_pages.push({
+                        number: i,
+                        is_active: i === current_page ? "active" : "",
+                    });
+                }
+            }
+            pages.value = new_pages;
+        }
+
+        const click_page = page => {
+            if (page === -2) page = current_page - 1;
+            else if (page === -1) page = current_page + 1;
+            let max_pages = parseInt(Math.ceil(total_records / pageNum));
+
+            if (page >= 1 && page <= max_pages) {
+                pull_page(page);
+            }
+        }
+        pull_page(current_page);
 
         return {
             editInfo,
@@ -545,6 +637,7 @@ export default {
             removePerson,
             searchPatrol,
             backToFirstPage,
+            click_page,
             rules,
             form,
             dialogFormVisible,
@@ -557,6 +650,8 @@ export default {
             queryName,
             ifShowQueryResult,
             queryResultList,
+            pages,
+            patrols,
         }
     },
     components: {

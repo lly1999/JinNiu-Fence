@@ -16,31 +16,32 @@ import { Raster, Vector as SourceVec } from 'ol/source';
 import XYZ from "ol/source/XYZ";
 import Map from "ol/Map.js";
 import View from "ol/View.js";
-import { onMounted, ref } from "vue";
+import { reactive, onMounted } from "vue";
 import { Style, Fill, Circle, Stroke } from "ol/style"
 import { Overlay, Feature } from "ol";
-import { useStore } from "vuex";
 import { DoubleClickZoom } from "ol/interaction";
 import { Polygon } from "ol/geom";
-import _ from 'lodash'
 import ImageLayer from "ol/layer/Image";
 import MapContent from "@/components/MapContent.vue";
-
+import axios from "axios";
+import { stringToList, getStandardTime, sortPoint } from '../scripts/utils'
+import { jinNiuFencePath } from '../scripts/constant'
 
 export default {
     setup() {
-        let store = useStore();
+
         let map = null;
-        let polygonList = _.cloneDeep(store.state.fence.fence_list);
         let content;
         let popup;
-        let polygonInfo = ref({});
+
+
         const initMap = () => {
             let terMap = new Map({
                 target: "olMap",
                 view: new View({
-                    center: [104.04396204, 30.71499549],
-                    zoom: 13,
+                    // center: [104.04396204, 30.71499549],
+                    center: [104.05632020955566, 30.753519881818795],
+                    zoom: 12.5,
                     projection: "EPSG:4326",
                 }),
             });
@@ -71,6 +72,7 @@ export default {
             map.addLayer(reverseTerLayer);
             let reverseCTALayer = getReverseLayer(CTAlayer);
             map.addLayer(reverseCTALayer);
+
             let container = document.getElementById("popup");
             content = document.getElementById("popup-content");
             let closer = document.getElementById("popup-closer");
@@ -87,6 +89,7 @@ export default {
                 return false;
             };
             createOverlayClick();
+
             map.on("pointermove", function (e) {
                 let pixel = map.getEventPixel(e.originalEvent);
                 let hit = map.hasFeatureAtPixel(pixel);
@@ -100,22 +103,60 @@ export default {
                     return interaction instanceof DoubleClickZoom;
                 });
             map.removeInteraction(dblClickInteraction);
+
             createPolygonLayer();
-            for (const fenceId in polygonList) {
-                // let polygonFeature = createPolygonFeature(_.cloneDeep(polygonList[fenceId]));
-                let polygonFeature = createPolygonFeature(polygonList[fenceId].markerList);
-                polygonFeature.set("name", fenceId);
-                polygonInfo[fenceId] = {
-                    id: polygonList[fenceId].id,
-                    name: polygonList[fenceId].name,
-                    operator: polygonList[fenceId].operator,
-                    editTime: polygonList[fenceId].editTime,
-                    markList: _.cloneDeep(polygonList[fenceId].markerList),
-                    feature: polygonFeature,
-                };
-                polygonSource.addFeature(polygonFeature);
+
+            for (const path of jinNiuFencePath) {
+                const tmp = new Polygon(path);
+                let oltarget = new Feature(tmp);
+                oltarget.setStyle(
+                    new Style({
+                        fill: new Fill({ color: 'rgba(135, 206, 255, 0.5)' }),
+                        stroke: new Stroke({
+                            lineDash: [10, 10, 10, 10],
+                            // color: "#4e98f444",
+                            // color: '#2b8cbe',
+                            color: "red",
+                            width: 1,
+                        })
+                    })
+                );
+                polygonSource.addFeature(oltarget);
             }
         };
+
+
+        let polygonInfo = reactive({});
+        const refresh_polygonInfo = () => {
+            Object.keys(polygonInfo).map(key => {
+                polygonSource.removeFeature(polygonInfo[key].feature);
+                delete polygonInfo[key]
+            });
+            axios({
+                url: "/api/region",
+                method: "get"
+            }).then(function (resp) {
+                for (const item of resp.data.data) {
+                    let pointList = stringToList(item.pointList);
+                    if (pointList.length < 3) continue;
+
+                    let polygonFeature = createPolygonFeature(pointList);
+                    polygonFeature.set('name', item.id);
+                    polygonSource.addFeature(polygonFeature);
+
+                    polygonInfo[item.id] = {
+                        id: item.id,
+                        name: item.name,
+                        operator: item.creator,
+                        editTime: getStandardTime(item.createTime),
+                        markList: pointList,
+                        feature: polygonFeature
+                    }
+                }
+            })
+        }
+
+
         let getReverseLayer = (layer) => {
             const raster = new Raster({
                 sources: [
@@ -142,6 +183,8 @@ export default {
             });
             return reverseLayer;
         };
+
+
         let reverseFunc = function (pixelsTemp) {
             //蓝色
             for (var i = 0; i < pixelsTemp.length; i += 4) {
@@ -160,9 +203,12 @@ export default {
                 pixelsTemp[i + 2] = 305 - pixelsTemp[i + 2];
             }
         };
+
+
         let polygonSource;
         let fenceStyle;
         let fenceLayer;
+
         const createPolygonLayer = () => {
             polygonSource = new SourceVec();
             fenceStyle = new Style({
@@ -183,10 +229,11 @@ export default {
             fenceLayer = new LayerVec({
                 source: polygonSource,
                 style: fenceStyle,
-                zIndex: 15,
+                zIndex: 5,
             });
             map.addLayer(fenceLayer);
         };
+
         const createOverlayClick = () => {
             map.on("singleclick", function (e) {
                 let coordinate = e.coordinate;
@@ -209,62 +256,79 @@ export default {
                 }
             });
         };
+
+        let num = 0;
         const createPolygonFeature = (markerList) => {
+            const color = ['rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)', 'rgba(255, 0, 0, 0.5)', 'rgbs(255, 255, 0, 0.5)'];
             let oltarget;
-            sortMarker(markerList);
-            markerList.push(markerList[0]);
+
+            if (markerList.length < 3) {
+                return null;
+            }
+
+            markerList = sortPoint(markerList);
+            markerList.push(markerList[0])
+
             const tmp = new Polygon([markerList]);
             oltarget = new Feature(tmp);
-            oltarget.setStyle(new Style({
-                fill: new Fill({ color: "#4e98f444" }),
-                stroke: new Stroke({
-                    lineDash: [10, 10, 10, 10],
-                    color: "#4e98f444",
-                    width: 3
+            oltarget.setStyle(
+                new Style({
+                    fill: new Fill({ color: color[num % 4] }),
+                    stroke: new Stroke({
+                        lineDash: [10, 10, 10, 10],
+                        // color: "#4e98f444",
+                        color: '#2b8cbe',
+                        width: 1,
+                    })
                 })
-            }));
+            );
+            num++;
             return oltarget;
-        };
-        const sortMarker = (markerList) => {
-            let geometryPoints = [];
-            let maxXPointIdx = 0;
-            for (let i = 0; i < markerList.length; i++) {
-                let gp = {
-                    X: markerList[i][0],
-                    Y: markerList[i][1],
-                    slope: null,
-                };
-                geometryPoints.push(gp);
-                if (geometryPoints[maxXPointIdx].X < gp.X) {
-                    maxXPointIdx = i;
-                }
-                else if (geometryPoints[maxXPointIdx].X == gp.X && geometryPoints[maxXPointIdx].Y > gp.Y) {
-                    maxXPointIdx = i;
-                }
-            }
-            for (let i = 0; i < markerList.length; i++) {
-                if (i == maxXPointIdx) {
-                    geometryPoints[i].slope = 1000000000;
-                }
-                else {
-                    geometryPoints[i].slope = (geometryPoints[i].Y - geometryPoints[maxXPointIdx].Y) / (geometryPoints[i].X - geometryPoints[maxXPointIdx].X);
-                }
-            }
-            geometryPoints.sort(function (a, b) {
-                if (a.slope < b.slope) {
-                    return 1;
-                }
-                else {
-                    return -1;
-                }
-            });
-            for (let i in geometryPoints) {
-                markerList[i] = [geometryPoints[i].X, geometryPoints[i].Y];
-            }
-        };
+        }
+
+        // const sortMarker = (markerList) => {
+        //     let geometryPoints = [];
+        //     let maxXPointIdx = 0;
+        //     for (let i = 0; i < markerList.length; i++) {
+        //         let gp = {
+        //             X: markerList[i][0],
+        //             Y: markerList[i][1],
+        //             slope: null,
+        //         };
+        //         geometryPoints.push(gp);
+        //         if (geometryPoints[maxXPointIdx].X < gp.X) {
+        //             maxXPointIdx = i;
+        //         }
+        //         else if (geometryPoints[maxXPointIdx].X == gp.X && geometryPoints[maxXPointIdx].Y > gp.Y) {
+        //             maxXPointIdx = i;
+        //         }
+        //     }
+        //     for (let i = 0; i < markerList.length; i++) {
+        //         if (i == maxXPointIdx) {
+        //             geometryPoints[i].slope = 1000000000;
+        //         }
+        //         else {
+        //             geometryPoints[i].slope = (geometryPoints[i].Y - geometryPoints[maxXPointIdx].Y) / (geometryPoints[i].X - geometryPoints[maxXPointIdx].X);
+        //         }
+        //     }
+        //     geometryPoints.sort(function (a, b) {
+        //         if (a.slope < b.slope) {
+        //             return 1;
+        //         }
+        //         else {
+        //             return -1;
+        //         }
+        //     });
+        //     for (let i in geometryPoints) {
+        //         markerList[i] = [geometryPoints[i].X, geometryPoints[i].Y];
+        //     }
+        // };
+
         onMounted(() => {
             initMap();
+            refresh_polygonInfo();
         });
+
         return {};
     },
     components: { MapContent }
