@@ -49,7 +49,7 @@ export default {
             map = terMap;
             //   添加地图
             let Tersource = new XYZ({
-                url: "http://t4.tianditu.com/DataServer?T=vec_w&tk=b9031f80391e6b65bd1dd80dcde1b097&x={x}&y={y}&l={z}",
+                url: "http://t4.tianditu.com/DataServer?T=vec_w&tk=b523e4ded27f524672a488e758227070&x={x}&y={y}&l={z}",
                 crossOrigin: "anonymous",
             });
             let terLayer = new TileLayer({
@@ -60,7 +60,7 @@ export default {
             // map.addLayer(terLayer);
             //添加注记
             let CTAsource = new XYZ({
-                url: "http://t4.tianditu.com/DataServer?T=cva_w&tk=b9031f80391e6b65bd1dd80dcde1b097&x={x}&y={y}&l={z}",
+                url: "http://t4.tianditu.com/DataServer?T=cva_w&tk=b523e4ded27f524672a488e758227070&x={x}&y={y}&l={z}",
                 crossOrigin: "anonymous",
             });
             let CTAlayer = new TileLayer({
