@@ -12,7 +12,7 @@
 <script >
 import "ol/ol.css";
 import { Tile as TileLayer, Vector as LayerVec } from "ol/layer";
-import { Raster, Vector as SourceVec } from 'ol/source';
+import { Vector as SourceVec } from 'ol/source';
 import XYZ from "ol/source/XYZ";
 import Map from "ol/Map.js";
 import View from "ol/View.js";
@@ -27,6 +27,7 @@ import axios from "axios";
 import { stringToList, getStandardTime, sortPoint } from '../scripts/utils'
 import { jinNiuFencePath } from '../scripts/constant'
 import { Point } from "ol/geom";
+import RasterSource from "ol/source/Raster";
 
 export default {
     setup() {
@@ -239,8 +240,28 @@ export default {
         getPatrolLocation();
         //postPatrolLocation();
 
-        let getReverseLayer = (layer) => {
-            const raster = new Raster({
+
+        const reverseFunc = function (pixelsTemp) {
+            //蓝色
+            for (var i = 0; i < pixelsTemp.length; i += 4) {
+                var r = pixelsTemp[i];
+                var g = pixelsTemp[i + 1];
+                var b = pixelsTemp[i + 2];
+                //运用图像学公式，设置灰度值
+                var grey = r * 0.3 + g * 0.59 + b * 0.11;
+                //将rgb的值替换为灰度值
+                pixelsTemp[i] = grey;
+                pixelsTemp[i + 1] = grey;
+                pixelsTemp[i + 2] = grey;
+                //基于灰色，设置为蓝色，这几个数值是我自己试出来的，可以根据需求调整
+                pixelsTemp[i] = 55 - pixelsTemp[i];
+                pixelsTemp[i + 1] = 255 - pixelsTemp[i + 1];
+                pixelsTemp[i + 2] = 305 - pixelsTemp[i + 2];
+            }
+        };
+
+        const getReverseLayer = (layer) => {
+            const raster = new RasterSource({
                 sources: [
                     //传入图层，这里是天地图矢量图或者天地图矢量注记
                     layer,
@@ -264,26 +285,6 @@ export default {
                 source: raster
             });
             return reverseLayer;
-        };
-
-
-        let reverseFunc = function (pixelsTemp) {
-            //蓝色
-            for (var i = 0; i < pixelsTemp.length; i += 4) {
-                var r = pixelsTemp[i];
-                var g = pixelsTemp[i + 1];
-                var b = pixelsTemp[i + 2];
-                //运用图像学公式，设置灰度值
-                var grey = r * 0.3 + g * 0.59 + b * 0.11;
-                //将rgb的值替换为灰度值
-                pixelsTemp[i] = grey;
-                pixelsTemp[i + 1] = grey;
-                pixelsTemp[i + 2] = grey;
-                //基于灰色，设置为蓝色，这几个数值是我自己试出来的，可以根据需求调整
-                pixelsTemp[i] = 55 - pixelsTemp[i];
-                pixelsTemp[i + 1] = 255 - pixelsTemp[i + 1];
-                pixelsTemp[i + 2] = 305 - pixelsTemp[i + 2];
-            }
         };
 
 
