@@ -92,14 +92,16 @@
     <div class="content-r">
         <div class="container">
             <div class="card text-white bg-primary mb-3 " style="max-width: 18rem; margin-left: auto;">
-                <div class="card-header">执法人员实时情况</div>
+                <div class="card-header">综合执法指令发布
+                    <button type="button" class="btn btn-outline-warning float-end">指令发布</button>
+                </div>
                 <div class="card-body">
-                    <div>在编：1人</div>
-                    <div>抽调：1人</div>
-                    <p></p>
-                    <div>补休：1人</div>
-                    <div>在岗在位：1人</div>
-                    <div>未按时打卡人员：1人</div>
+                    <div style="color: red">中队长/副队长</div>
+                    <div>已查收7 未查收6 查收率90%</div>
+                    <div style="color: red">执法人员</div>
+                    <div>已查收7 未查收6 查收率90%</div>
+                    <div style="color: red">协管人员</div>
+                    <div>已查收7 未查收6 查收率90%</div>
                 </div>
             </div>
 
@@ -117,7 +119,7 @@
                 <div class="card-header">市容严管街人员情况</div>
                 <div class="card-body">
 
-                    <ScrollBoard :config="problemCount" style="width:20vw;height: 29vh;" />
+                    <ScrollBoard :config="problemCount" style="width:20vw;height: 27vh;" />
 
                 </div>
 

@@ -258,6 +258,7 @@ export default {
                 url: "/api/region",
                 method: "get"
             }).then(function (resp) {
+                num = 0;
                 for (const item of resp.data.data) {
                     let pointList = stringToList(item.pointList);
                     if (pointList.length < 3) continue;
@@ -320,7 +321,7 @@ export default {
             fenceLayer = new LayerVec({
                 source: polygonSource,
                 style: fenceStyle,
-                zIndex: 15
+                zIndex: 10
             });
             map.addLayer(fenceLayer)
         }

@@ -17,7 +17,7 @@ import XYZ from "ol/source/XYZ";
 import Map from "ol/Map.js";
 import View from "ol/View.js";
 import { reactive, onMounted } from "vue";
-import { Style, Fill, Circle, Stroke } from "ol/style"
+import { Style, Fill, Circle, Stroke, Icon } from "ol/style"
 import { Overlay, Feature } from "ol";
 import { DoubleClickZoom } from "ol/interaction";
 import { Polygon } from "ol/geom";
@@ -26,6 +26,7 @@ import MapContent from "@/components/MapContent.vue";
 import axios from "axios";
 import { stringToList, getStandardTime, sortPoint } from '../scripts/utils'
 import { jinNiuFencePath } from '../scripts/constant'
+import { Point } from "ol/geom";
 
 export default {
     setup() {
@@ -105,6 +106,7 @@ export default {
             map.removeInteraction(dblClickInteraction);
 
             createPolygonLayer();
+            createIconLayer();
 
             for (const path of jinNiuFencePath) {
                 const tmp = new Polygon(path);
@@ -156,6 +158,86 @@ export default {
             })
         }
 
+        let patrolLocation = reactive({});
+        const getPatrolLocation = () => {
+            axios({
+                url: '/api/patrol-location',
+                method: 'get',
+            }).then(function (resp) {
+
+                if (resp.status == 200) {
+                    for (const item of resp.data.data) {
+                        if (item.location != null) {
+                            patrolLocation[item.id] = {
+                                id: item.id,
+                                patrolId: item.patrolId,
+                                location: stringToSingleLocation(item.location),
+                            }
+
+                            let point = stringToSingleLocation(item.location);
+                            let iconFeature = new Feature({
+                                geometry: new Point(point, "XY"),
+
+                            });
+
+                            let identity;
+                            getPatrolInfo(item.patrolId).then(res => {
+                                identity = res;
+
+                                if (identity == "执法人员") {
+                                    iconFeature.set('bgId', 0);
+
+                                } else if (identity == "协管人员") {
+                                    iconFeature.set('bgId', 2);
+                                }
+                                iconSource.addFeature(iconFeature);
+                            });
+
+
+                        }
+                    }
+                }
+            })
+        }
+
+        const getPatrolInfo = id => {
+            return axios({
+                url: '/api/patrol/' + id,
+                method: 'get',
+                params: {
+                    id: id
+                }
+            }).then(function (resp) {
+
+                return resp.data.data.identity;
+
+            })
+
+
+        }
+
+        const stringToSingleLocation = path => {
+            let pathLng = path.replace("[", "").replace("]", "").split(",")[0] * 1;
+            let pathLat = path.replace("[", "").replace("]", "").split(",")[1] * 1;
+            return [pathLng, pathLat];
+        }
+
+        // const postPatrolLocation = () => {
+        //     axios({
+        //         url: '/api/patrol-location',
+        //         method: 'post',
+        //         data: {
+        //             location: "[104.014997, 30.722573]",
+        //             patrolId: 18,
+        //         }
+        //     }).then(function (resp) {
+        //         console.log(resp);
+        //         getPatrolLocation();
+        //     })
+        // }
+
+        getPatrolLocation();
+        //postPatrolLocation();
 
         let getReverseLayer = (layer) => {
             const raster = new Raster({
@@ -233,6 +315,34 @@ export default {
             });
             map.addLayer(fenceLayer);
         };
+
+
+        let iconSource;
+        let iconLayer;
+        const createIconLayer = () => {
+            let bg = ['/images/staff.png', '/images/staff2.png', '/images/staff3.png', '/images/staff4.png']
+            iconSource = new SourceVec();
+            iconLayer = new LayerVec({
+                source: iconSource,
+                style: function (feature) {
+                    let id = feature.get('bgId');
+
+                    let style = new Style({
+                        image: new Icon({
+                            anchorOrigin: 'bottom-left',
+                            anchorYUnits: "pixels",
+                            opacity: 0.75,
+                            src: bg[id],
+                        })
+
+
+                    })
+                    return [style]
+                },
+                zIndex: 10,
+            });
+            map.addLayer(iconLayer);
+        }
 
         const createOverlayClick = () => {
             map.on("singleclick", function (e) {
