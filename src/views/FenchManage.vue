@@ -221,6 +221,7 @@ export default {
             for (const path of jinNiuFencePath) {
                 const tmp = new Polygon(path);
                 let oltarget = new Feature(tmp);
+                oltarget.set('name', 'jinNiu');
                 oltarget.setStyle(
 
                     new Style({
@@ -258,6 +259,7 @@ export default {
                 url: "/api/region",
                 method: "get"
             }).then(function (resp) {
+                num = 0;
                 for (const item of resp.data.data) {
                     let pointList = stringToList(item.pointList);
                     if (pointList.length < 3) continue;
@@ -320,13 +322,13 @@ export default {
             fenceLayer = new LayerVec({
                 source: polygonSource,
                 style: fenceStyle,
-                zIndex: 15
+                zIndex: 10
             });
             map.addLayer(fenceLayer)
         }
 
         const createOverlayClick = () => {
-            overlayClick = map.on('singleclick', function (e) {
+            overlayClick = map.on('dblclick', function (e) {
                 let coordinate = e.coordinate;
                 let feature = map.forEachFeatureAtPixel(e.pixel, function (feature) {
                     return feature;
@@ -336,20 +338,23 @@ export default {
                     content.innerHTML = '';
 
                     let featureId = feature.get('name');
+                    if (featureId != "jinNiu") {
+                        let name = document.createElement('p');
+                        name.innerText = '围栏名: ' + polygonInfo[featureId].name;
+                        content.appendChild(name);
 
-                    let name = document.createElement('p');
-                    name.innerText = '围栏名: ' + polygonInfo[featureId].name;
-                    content.appendChild(name);
+                        let operator = document.createElement('p');
+                        operator.innerText = '操作人: ' + polygonInfo[featureId].operator;
+                        content.appendChild(operator);
 
-                    let operator = document.createElement('p');
-                    operator.innerText = '操作人: ' + polygonInfo[featureId].operator;
-                    content.appendChild(operator);
+                        let editTime = document.createElement('p');
+                        editTime.innerText = '编辑时间: ' + polygonInfo[featureId].editTime;
+                        content.appendChild(editTime);
 
-                    let editTime = document.createElement('p');
-                    editTime.innerText = '编辑时间: ' + polygonInfo[featureId].editTime;
-                    content.appendChild(editTime);
+                        popup.setPosition(coordinate);
+                    }
 
-                    popup.setPosition(coordinate);
+
                 }
             });
         }
@@ -361,9 +366,15 @@ export default {
                 });
 
                 if (feature) {
-                    delete markerInfo[feature.get('name')];
-                    iconSource.removeFeature(feature);
-                    preview();
+                    if (feature.get('name').substring(0, 4) == 'icon') {
+
+                        delete markerInfo[feature.get('name')];
+                        iconSource.removeFeature(feature);
+                        preview();
+                    } else if (feature.get('name') == 'jinNiu') {
+                        clickHandler(e);
+                    }
+
                 } else {
                     clickHandler(e);
                 }
@@ -406,7 +417,7 @@ export default {
                 geometry: new Point(point, "XY")
             });
 
-            iconFeature.set('name', markId);
+            iconFeature.set('name', 'icon' + markId);
             markId++;
 
             iconSource.addFeature(iconFeature);
@@ -573,7 +584,7 @@ export default {
                     let iconTranslate = new Translate({
                         features: new Collection([iconFeature])
                     });
-                    iconFeature.set('name', markId);
+                    iconFeature.set('name', 'icon' + markId);
                     markId++;
                     map.addInteraction(iconTranslate);
 

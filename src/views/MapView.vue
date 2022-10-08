@@ -12,12 +12,12 @@
 <script >
 import "ol/ol.css";
 import { Tile as TileLayer, Vector as LayerVec } from "ol/layer";
-import { Raster, Vector as SourceVec } from 'ol/source';
+import { Vector as SourceVec } from 'ol/source';
 import XYZ from "ol/source/XYZ";
 import Map from "ol/Map.js";
 import View from "ol/View.js";
 import { reactive, onMounted } from "vue";
-import { Style, Fill, Circle, Stroke } from "ol/style"
+import { Style, Fill, Circle, Stroke, Icon } from "ol/style"
 import { Overlay, Feature } from "ol";
 import { DoubleClickZoom } from "ol/interaction";
 import { Polygon } from "ol/geom";
@@ -26,6 +26,8 @@ import MapContent from "@/components/MapContent.vue";
 import axios from "axios";
 import { stringToList, getStandardTime, sortPoint } from '../scripts/utils'
 import { jinNiuFencePath } from '../scripts/constant'
+import { Point } from "ol/geom";
+import RasterSource from "ol/source/Raster";
 
 export default {
     setup() {
@@ -48,7 +50,7 @@ export default {
             map = terMap;
             //   添加地图
             let Tersource = new XYZ({
-                url: "http://t4.tianditu.com/DataServer?T=vec_w&tk=b9031f80391e6b65bd1dd80dcde1b097&x={x}&y={y}&l={z}",
+                url: "http://t4.tianditu.com/DataServer?T=vec_w&tk=b523e4ded27f524672a488e758227070&x={x}&y={y}&l={z}",
                 crossOrigin: "anonymous",
             });
             let terLayer = new TileLayer({
@@ -59,7 +61,7 @@ export default {
             // map.addLayer(terLayer);
             //添加注记
             let CTAsource = new XYZ({
-                url: "http://t4.tianditu.com/DataServer?T=cva_w&tk=b9031f80391e6b65bd1dd80dcde1b097&x={x}&y={y}&l={z}",
+                url: "http://t4.tianditu.com/DataServer?T=cva_w&tk=b523e4ded27f524672a488e758227070&x={x}&y={y}&l={z}",
                 crossOrigin: "anonymous",
             });
             let CTAlayer = new TileLayer({
@@ -105,6 +107,7 @@ export default {
             map.removeInteraction(dblClickInteraction);
 
             createPolygonLayer();
+            createIconLayer();
 
             for (const path of jinNiuFencePath) {
                 const tmp = new Polygon(path);
@@ -156,9 +159,109 @@ export default {
             })
         }
 
+        let patrolLocation = reactive({});
+        const getPatrolLocation = () => {
+            axios({
+                url: '/api/patrol-location',
+                method: 'get',
+            }).then(function (resp) {
 
-        let getReverseLayer = (layer) => {
-            const raster = new Raster({
+                if (resp.status == 200) {
+                    for (const item of resp.data.data) {
+                        if (item.location != null) {
+                            patrolLocation[item.id] = {
+                                id: item.id,
+                                patrolId: item.patrolId,
+                                location: stringToSingleLocation(item.location),
+                            }
+
+                            let point = stringToSingleLocation(item.location);
+                            let iconFeature = new Feature({
+                                geometry: new Point(point, "XY"),
+
+                            });
+
+                            let identity;
+                            getPatrolInfo(item.patrolId).then(res => {
+                                identity = res;
+
+                                if (identity == "执法人员") {
+                                    iconFeature.set('bgId', 0);
+
+                                } else if (identity == "协管人员") {
+                                    iconFeature.set('bgId', 2);
+                                }
+                                iconSource.addFeature(iconFeature);
+                            });
+
+
+                        }
+                    }
+                }
+            })
+        }
+
+        const getPatrolInfo = id => {
+            return axios({
+                url: '/api/patrol/' + id,
+                method: 'get',
+                params: {
+                    id: id
+                }
+            }).then(function (resp) {
+
+                return resp.data.data.identity;
+
+            })
+
+
+        }
+
+        const stringToSingleLocation = path => {
+            let pathLng = path.replace("[", "").replace("]", "").split(",")[0] * 1;
+            let pathLat = path.replace("[", "").replace("]", "").split(",")[1] * 1;
+            return [pathLng, pathLat];
+        }
+
+        // const postPatrolLocation = () => {
+        //     axios({
+        //         url: '/api/patrol-location',
+        //         method: 'post',
+        //         data: {
+        //             location: "[104.014997, 30.722573]",
+        //             patrolId: 18,
+        //         }
+        //     }).then(function (resp) {
+        //         console.log(resp);
+        //         getPatrolLocation();
+        //     })
+        // }
+
+        getPatrolLocation();
+        //postPatrolLocation();
+
+
+        const reverseFunc = function (pixelsTemp) {
+            //蓝色
+            for (var i = 0; i < pixelsTemp.length; i += 4) {
+                var r = pixelsTemp[i];
+                var g = pixelsTemp[i + 1];
+                var b = pixelsTemp[i + 2];
+                //运用图像学公式，设置灰度值
+                var grey = r * 0.3 + g * 0.59 + b * 0.11;
+                //将rgb的值替换为灰度值
+                pixelsTemp[i] = grey;
+                pixelsTemp[i + 1] = grey;
+                pixelsTemp[i + 2] = grey;
+                //基于灰色，设置为蓝色，这几个数值是我自己试出来的，可以根据需求调整
+                pixelsTemp[i] = 55 - pixelsTemp[i];
+                pixelsTemp[i + 1] = 255 - pixelsTemp[i + 1];
+                pixelsTemp[i + 2] = 305 - pixelsTemp[i + 2];
+            }
+        };
+
+        const getReverseLayer = (layer) => {
+            const raster = new RasterSource({
                 sources: [
                     //传入图层，这里是天地图矢量图或者天地图矢量注记
                     layer,
@@ -182,26 +285,6 @@ export default {
                 source: raster
             });
             return reverseLayer;
-        };
-
-
-        let reverseFunc = function (pixelsTemp) {
-            //蓝色
-            for (var i = 0; i < pixelsTemp.length; i += 4) {
-                var r = pixelsTemp[i];
-                var g = pixelsTemp[i + 1];
-                var b = pixelsTemp[i + 2];
-                //运用图像学公式，设置灰度值
-                var grey = r * 0.3 + g * 0.59 + b * 0.11;
-                //将rgb的值替换为灰度值
-                pixelsTemp[i] = grey;
-                pixelsTemp[i + 1] = grey;
-                pixelsTemp[i + 2] = grey;
-                //基于灰色，设置为蓝色，这几个数值是我自己试出来的，可以根据需求调整
-                pixelsTemp[i] = 55 - pixelsTemp[i];
-                pixelsTemp[i + 1] = 255 - pixelsTemp[i + 1];
-                pixelsTemp[i + 2] = 305 - pixelsTemp[i + 2];
-            }
         };
 
 
@@ -233,6 +316,34 @@ export default {
             });
             map.addLayer(fenceLayer);
         };
+
+
+        let iconSource;
+        let iconLayer;
+        const createIconLayer = () => {
+            let bg = ['/images/staff.png', '/images/staff2.png', '/images/staff3.png', '/images/staff4.png']
+            iconSource = new SourceVec();
+            iconLayer = new LayerVec({
+                source: iconSource,
+                style: function (feature) {
+                    let id = feature.get('bgId');
+
+                    let style = new Style({
+                        image: new Icon({
+                            anchorOrigin: 'bottom-left',
+                            anchorYUnits: "pixels",
+                            opacity: 0.75,
+                            src: bg[id],
+                        })
+
+
+                    })
+                    return [style]
+                },
+                zIndex: 10,
+            });
+            map.addLayer(iconLayer);
+        }
 
         const createOverlayClick = () => {
             map.on("singleclick", function (e) {
