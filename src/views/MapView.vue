@@ -12,7 +12,7 @@
 <script >
 import "ol/ol.css";
 import { Tile as TileLayer, Vector as LayerVec } from "ol/layer";
-import { Vector as SourceVec } from 'ol/source';
+import { Vector as SourceVec, Raster } from 'ol/source';
 import XYZ from "ol/source/XYZ";
 import Map from "ol/Map.js";
 import View from "ol/View.js";
@@ -27,7 +27,6 @@ import axios from "axios";
 import { stringToList, getStandardTime, sortPoint } from '../scripts/utils'
 import { jinNiuFencePath } from '../scripts/constant'
 import { Point } from "ol/geom";
-import RasterSource from "ol/source/Raster";
 
 export default {
     setup() {
@@ -241,27 +240,27 @@ export default {
         //postPatrolLocation();
 
 
-        const reverseFunc = function (pixelsTemp) {
-            //蓝色
-            for (var i = 0; i < pixelsTemp.length; i += 4) {
-                var r = pixelsTemp[i];
-                var g = pixelsTemp[i + 1];
-                var b = pixelsTemp[i + 2];
-                //运用图像学公式，设置灰度值
-                var grey = r * 0.3 + g * 0.59 + b * 0.11;
-                //将rgb的值替换为灰度值
-                pixelsTemp[i] = grey;
-                pixelsTemp[i + 1] = grey;
-                pixelsTemp[i + 2] = grey;
-                //基于灰色，设置为蓝色，这几个数值是我自己试出来的，可以根据需求调整
-                pixelsTemp[i] = 55 - pixelsTemp[i];
-                pixelsTemp[i + 1] = 255 - pixelsTemp[i + 1];
-                pixelsTemp[i + 2] = 305 - pixelsTemp[i + 2];
-            }
-        };
+        // function reverseFunc(pixelsTemp) {
+        //     //蓝色
+        //     for (var i = 0; i < pixelsTemp.length; i += 4) {
+        //         var r = pixelsTemp[i];
+        //         var g = pixelsTemp[i + 1];
+        //         var b = pixelsTemp[i + 2];
+        //         //运用图像学公式，设置灰度值
+        //         var grey = r * 0.3 + g * 0.59 + b * 0.11;
+        //         //将rgb的值替换为灰度值
+        //         pixelsTemp[i] = grey;
+        //         pixelsTemp[i + 1] = grey;
+        //         pixelsTemp[i + 2] = grey;
+        //         //基于灰色，设置为蓝色，这几个数值是我自己试出来的，可以根据需求调整
+        //         pixelsTemp[i] = 55 - pixelsTemp[i];
+        //         pixelsTemp[i + 1] = 255 - pixelsTemp[i + 1];
+        //         pixelsTemp[i + 2] = 305 - pixelsTemp[i + 2];
+        //     }
+        // };
 
-        const getReverseLayer = (layer) => {
-            const raster = new RasterSource({
+        function getReverseLayer(layer) {
+            const raster = new Raster({
                 sources: [
                     //传入图层，这里是天地图矢量图或者天地图矢量注记
                     layer,
@@ -270,22 +269,38 @@ export default {
                 operationType: "image",
                 operation: function (pixels) {
                     //执行颜色转换方法，注意，这里的方法需要使用lib引入进来才可以使用
-                    reverseFunc(pixels[0].data);
+                    // reverseFunction(pixels[0].data);
+                    for (var i = 0; i < pixels[0].data.length; i += 4) {
+                        var r = pixels[0].data[i];
+                        var g = pixels[0].data[i + 1];
+                        var b = pixels[0].data[i + 2];
+                        //运用图像学公式，设置灰度值
+                        var grey = r * 0.3 + g * 0.59 + b * 0.11;
+                        //将rgb的值替换为灰度值
+                        pixels[0].data[i] = grey;
+                        pixels[0].data[i + 1] = grey;
+                        pixels[0].data[i + 2] = grey;
+                        //基于灰色，设置为蓝色，这几个数值是我自己试出来的，可以根据需求调整
+                        pixels[0].data[i] = 55 - pixels[0].data[i];
+                        pixels[0].data[i + 1] = 255 - pixels[0].data[i + 1];
+                        pixels[0].data[i + 2] = 305 - pixels[0].data[i + 2];
+                    }
                     return pixels[0];
                 },
                 //线程数量
                 threads: 10,
                 //允许operation使用外部方法
-                lib: {
-                    reverseFunc: reverseFunc,
-                }
+                // lib: {
+                //     reverseFunction: reverseFunc,
+                // },
+
             });
             let reverseLayer = new ImageLayer({
                 name: "天地图矢量图层",
                 source: raster
             });
             return reverseLayer;
-        };
+        }
 
 
         let polygonSource;
