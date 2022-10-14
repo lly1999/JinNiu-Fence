@@ -27,14 +27,23 @@ import axios from "axios";
 import { stringToList, getStandardTime, sortPoint } from '../scripts/utils'
 import { jinNiuFencePath } from '../scripts/constant'
 import { Point } from "ol/geom";
+import AMapLoader from "@amap/amap-jsapi-loader"
 
 export default {
     setup() {
 
+        let Amap;
+        AMapLoader.load({
+            key: "61ad75101d54a5371d872c69fdce0d3f"
+        }).then((AMap) => {
+            Amap = AMap;
+            getPatrolLocation();
+        })
+
         let map = null;
         let content;
         let popup;
-
+        let closer;
 
         const initMap = () => {
             let terMap = new Map({
@@ -76,7 +85,7 @@ export default {
 
             let container = document.getElementById("popup");
             content = document.getElementById("popup-content");
-            let closer = document.getElementById("popup-closer");
+            closer = document.getElementById("popup-closer");
             popup = new Overlay({
                 element: container,
                 autoPan: true,
@@ -111,6 +120,7 @@ export default {
             for (const path of jinNiuFencePath) {
                 const tmp = new Polygon(path);
                 let oltarget = new Feature(tmp);
+                oltarget.set('name', 'jinNiu');
                 oltarget.setStyle(
                     new Style({
                         fill: new Fill({ color: 'rgba(135, 206, 255, 0.5)' }),
@@ -142,6 +152,7 @@ export default {
                     let pointList = stringToList(item.pointList);
                     if (pointList.length < 3) continue;
 
+                    pointList = sortPoint(pointList);
                     let polygonFeature = createPolygonFeature(pointList);
                     polygonFeature.set('name', item.id);
                     polygonSource.addFeature(polygonFeature);
@@ -159,6 +170,7 @@ export default {
         }
 
         let patrolLocation = reactive({});
+        let iconFeatureList = reactive([]);
         const getPatrolLocation = () => {
             axios({
                 url: '/api/patrol-location',
@@ -166,6 +178,11 @@ export default {
             }).then(function (resp) {
 
                 if (resp.status == 200) {
+                    for (const feature of iconFeatureList) {
+                        iconSource.removeFeature(feature);
+                    }
+                    iconFeatureList.splice(0, iconFeatureList.length);
+
                     for (const item of resp.data.data) {
                         if (item.location != null) {
                             patrolLocation[item.id] = {
@@ -181,16 +198,33 @@ export default {
                             });
 
                             let identity;
+                            let relateRegion;
                             getPatrolInfo(item.patrolId).then(res => {
-                                identity = res;
+                                identity = res.identity;
+                                relateRegion = polygonInfo[res.relatedRegion].markList;
+                                iconFeature.set('name', 'icon');
+                                iconFeature.set('polygonId', res.relatedRegion);
+                                iconFeature.set('patrolId', item.patrolId);
 
                                 if (identity == "执法人员") {
-                                    iconFeature.set('bgId', 0);
+                                    let isInRing = Amap.GeometryUtil.isPointInRing(point, relateRegion);
+                                    if (isInRing) {
+                                        iconFeature.set('bgId', 0);
+                                    } else {
+                                        iconFeature.set('bgId', 1);
+                                    }
+
 
                                 } else if (identity == "协管人员") {
-                                    iconFeature.set('bgId', 2);
+                                    let isInRing = Amap.GeometryUtil.isPointInRing(point, relateRegion);
+                                    if (isInRing) {
+                                        iconFeature.set('bgId', 2);
+                                    } else {
+                                        iconFeature.set('bgId', 3);
+                                    }
                                 }
                                 iconSource.addFeature(iconFeature);
+                                iconFeatureList.push(iconFeature);
                             });
 
 
@@ -208,8 +242,7 @@ export default {
                     id: id
                 }
             }).then(function (resp) {
-
-                return resp.data.data.identity;
+                return resp.data.data;
 
             })
 
@@ -227,37 +260,18 @@ export default {
         //         url: '/api/patrol-location',
         //         method: 'post',
         //         data: {
-        //             location: "[104.014997, 30.722573]",
-        //             patrolId: 18,
+        //             location: "[104.05098852802954, 30.688377297524777]",
+        //             patrolId: 20,
         //         }
         //     }).then(function (resp) {
         //         console.log(resp);
-        //         getPatrolLocation();
+        //         // getPatrolLocation();
         //     })
         // }
 
-        getPatrolLocation();
+
         //postPatrolLocation();
 
-
-        // function reverseFunc(pixelsTemp) {
-        //     //蓝色
-        //     for (var i = 0; i < pixelsTemp.length; i += 4) {
-        //         var r = pixelsTemp[i];
-        //         var g = pixelsTemp[i + 1];
-        //         var b = pixelsTemp[i + 2];
-        //         //运用图像学公式，设置灰度值
-        //         var grey = r * 0.3 + g * 0.59 + b * 0.11;
-        //         //将rgb的值替换为灰度值
-        //         pixelsTemp[i] = grey;
-        //         pixelsTemp[i + 1] = grey;
-        //         pixelsTemp[i + 2] = grey;
-        //         //基于灰色，设置为蓝色，这几个数值是我自己试出来的，可以根据需求调整
-        //         pixelsTemp[i] = 55 - pixelsTemp[i];
-        //         pixelsTemp[i + 1] = 255 - pixelsTemp[i + 1];
-        //         pixelsTemp[i + 2] = 305 - pixelsTemp[i + 2];
-        //     }
-        // };
 
         function getReverseLayer(layer) {
             const raster = new Raster({
@@ -367,21 +381,58 @@ export default {
                     return feature;
                 });
                 if (feature) {
-                    content.innerHTML = "";
-                    let featureId = feature.get("name");
-                    let name = document.createElement("p");
-                    name.innerText = "围栏名: " + polygonInfo[featureId].name;
-                    content.appendChild(name);
-                    let operator = document.createElement("p");
-                    operator.innerText = "操作人: " + polygonInfo[featureId].operator;
-                    content.appendChild(operator);
-                    let editTime = document.createElement("p");
-                    editTime.innerText = "编辑时间: " + polygonInfo[featureId].editTime;
-                    content.appendChild(editTime);
-                    popup.setPosition(coordinate);
+
+                    let featureId = feature.get('name');
+                    if (featureId != "jinNiu" && featureId != 'icon') {
+
+                        content.innerHTML = "";
+
+                        let name = document.createElement("p");
+                        name.innerText = "围栏名: " + polygonInfo[featureId].name;
+                        content.appendChild(name);
+                        let operator = document.createElement("p");
+                        operator.innerText = "操作人: " + polygonInfo[featureId].operator;
+                        content.appendChild(operator);
+                        let editTime = document.createElement("p");
+                        editTime.innerText = "编辑时间: " + polygonInfo[featureId].editTime;
+                        content.appendChild(editTime);
+                        popup.setPosition(coordinate);
+                    } else if (featureId == 'icon') {
+                        content.innerHTML = "";
+
+                        let polygonId = feature.get('polygonId');
+                        let name = document.createElement("p");
+                        name.innerText = "所属围栏: " + polygonInfo[polygonId].name;
+                        content.appendChild(name);
+
+                        let operator = document.createElement("p");
+                        operator.innerText = "操作人: " + feature.get('patrolId');
+                        content.appendChild(operator);
+
+                        popup.setPosition(coordinate);
+                    }
                 }
             });
         };
+
+        // const createIconOverlayClick = () => {
+        //     let coordinate = e.coordinate;
+        //         let feature = map.forEachFeatureAtPixel(e.pixel, function (feature) {
+        //             return feature;
+        //         });
+        //     if (feature) {
+        //         let featureId = feature.get('name');
+        //         if (featureId == 'icon') {
+        //             content.innerHTML = "";
+
+        //                 let polygonId = feature.get('polygonId');
+        //                 let name = document.createElement("p");
+        //                 name.innerText = "围栏名: " + polygonInfo[polygonId].name;
+
+        //                 popup.setPosition(coordinate);
+        //         }
+        //     }
+        // }
 
         let num = 0;
         const createPolygonFeature = (markerList) => {
@@ -392,7 +443,7 @@ export default {
                 return null;
             }
 
-            markerList = sortPoint(markerList);
+            // markerList = sortPoint(markerList);
             markerList.push(markerList[0])
 
             const tmp = new Polygon([markerList]);
@@ -453,6 +504,8 @@ export default {
         onMounted(() => {
             initMap();
             refresh_polygonInfo();
+
+            setInterval(getPatrolLocation, 60000);
         });
 
         return {};
