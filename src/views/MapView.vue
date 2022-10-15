@@ -7,6 +7,54 @@
         <div id="popup-content"></div>
     </div>
 
+    <el-dialog v-model="ifShowWorkStatistics" width="40%">
+        <div>
+            <div class="dialog-title">个人信息</div>
+            <el-table :data="patrolWorkStatistics">
+                <el-table-column property="name" label="姓名" header-align="center" align="center" />
+                <el-table-column property="department" label="部门" header-align="center" align="center" />
+                <el-table-column property="identity" label="人员类别" header-align="center" align="center" />
+                <el-table-column property="telephone" label="联系电话" header-align="center" align="center" />
+                <el-table-column property="isInOwnRing" label="是否在本人辖区" header-align="center" align="center" />
+            </el-table>
+        </div>
+
+
+        <div style="margin-top: 5vh;">
+            <div class="dialog-title">在岗统计</div>
+            <el-config-provider :locale="locale">
+                <el-date-picker v-model="value1" type="date" placeholder="选择日期" :disabled-date="disabledDate"
+                    @change="dateChange" />
+            </el-config-provider>
+            <el-table :data="workStat">
+                <el-table-column property="name" label="姓名" width="120" header-align="center" align="center" />
+                <el-table-column property="status" label="状态" width="120" header-align="center" align="center" />
+                <el-table-column property="onWorkTime" label="上班时间" header-align="center" align="center" />
+                <el-table-column property="offWorkTime" label="下班时间" header-align="center" align="center" />
+            </el-table>
+        </div>
+
+        <div style="margin-top: 5vh;">
+            <div class="dialog-title">指令发布</div>
+
+            <div style="margin-left: 7vw;">
+                <el-space wrap size="large" style="margin-bottom: 1vh;">
+                    <el-button type="primary" plain>规范周边单车</el-button>
+                    <el-button type="primary" plain>取缔流动摊贩</el-button>
+                    <el-button type="primary" plain>整治越门经营</el-button>
+                </el-space>
+
+                <el-space wrap size="large">
+                    <el-button type="primary" plain>整治乱堆乱放</el-button>
+                    <el-button type="primary" plain>整治乱牵乱挂</el-button>
+                    <el-button type="primary" plain>整治乱扔乱排乱倒</el-button>
+                </el-space>
+            </div>
+
+        </div>
+
+    </el-dialog>
+
 </template>
   
 <script >
@@ -16,7 +64,7 @@ import { Vector as SourceVec, Raster } from 'ol/source';
 import XYZ from "ol/source/XYZ";
 import Map from "ol/Map.js";
 import View from "ol/View.js";
-import { reactive, onMounted } from "vue";
+import { reactive, onMounted, ref } from "vue";
 import { Style, Fill, Circle, Stroke, Icon } from "ol/style"
 import { Overlay, Feature } from "ol";
 import { DoubleClickZoom } from "ol/interaction";
@@ -28,22 +76,26 @@ import { stringToList, getStandardTime, sortPoint } from '../scripts/utils'
 import { jinNiuFencePath } from '../scripts/constant'
 import { Point } from "ol/geom";
 import AMapLoader from "@amap/amap-jsapi-loader"
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 
 export default {
     setup() {
 
+        const locale = zhCn;
+        const value1 = ref('');
         let Amap;
         AMapLoader.load({
             key: "61ad75101d54a5371d872c69fdce0d3f"
         }).then((AMap) => {
             Amap = AMap;
-            getPatrolLocation();
+            getPatrolsLocation();
         })
 
         let map = null;
         let content;
         let popup;
         let closer;
+        let ifShowWorkStatistics = ref(false);
 
         const initMap = () => {
             let terMap = new Map({
@@ -90,7 +142,7 @@ export default {
                 element: container,
                 autoPan: true,
                 positioning: "bottom-center",
-                stopEvent: false,
+                stopEvent: true,
             });
             map.addOverlay(popup);
             closer.onclick = function () {
@@ -169,14 +221,14 @@ export default {
             })
         }
 
+
         let patrolLocation = reactive({});
         let iconFeatureList = reactive([]);
-        const getPatrolLocation = () => {
+        const getPatrolsLocation = () => {
             axios({
-                url: '/api/patrol-location',
+                url: '/api/patrolWholeInfoController',
                 method: 'get',
             }).then(function (resp) {
-
                 if (resp.status == 200) {
                     for (const feature of iconFeatureList) {
                         iconSource.removeFeature(feature);
@@ -184,10 +236,9 @@ export default {
                     iconFeatureList.splice(0, iconFeatureList.length);
 
                     for (const item of resp.data.data) {
-                        if (item.location != null) {
-                            patrolLocation[item.id] = {
-                                id: item.id,
-                                patrolId: item.patrolId,
+                        if (item.location != null && item.patrol_id != null) {
+                            patrolLocation[item.patrol_id] = {
+                                patrolId: item.patrol_id,
                                 location: stringToSingleLocation(item.location),
                             }
 
@@ -197,36 +248,36 @@ export default {
 
                             });
 
-                            let identity;
-                            let relateRegion;
-                            getPatrolInfo(item.patrolId).then(res => {
-                                identity = res.identity;
-                                relateRegion = polygonInfo[res.relatedRegion].markList;
-                                iconFeature.set('name', 'icon');
-                                iconFeature.set('polygonId', res.relatedRegion);
-                                iconFeature.set('patrolId', item.patrolId);
+                            iconFeature.set('name', 'icon');
+                            iconFeature.set('polygonId', item.relatedRegion);
+                            iconFeature.set('patrolId', item.patrol_id);
+                            iconFeature.set('patrolName', item.name);
+                            iconFeature.set('department', item.department);
+                            iconFeature.set('telephone', item.telephone);
+                            iconFeature.set('identity', item.identity);
 
-                                if (identity == "执法人员") {
-                                    let isInRing = Amap.GeometryUtil.isPointInRing(point, relateRegion);
-                                    if (isInRing) {
-                                        iconFeature.set('bgId', 0);
-                                    } else {
-                                        iconFeature.set('bgId', 1);
-                                    }
+                            let relateRegion = polygonInfo[item.relatedRegion].markList;
+                            if (item.identity == "执法人员") {
+                                let isInRing = Amap.GeometryUtil.isPointInRing(point, relateRegion);
+                                if (isInRing) {
+                                    iconFeature.set('bgId', 0);
 
-
-                                } else if (identity == "协管人员") {
-                                    let isInRing = Amap.GeometryUtil.isPointInRing(point, relateRegion);
-                                    if (isInRing) {
-                                        iconFeature.set('bgId', 2);
-                                    } else {
-                                        iconFeature.set('bgId', 3);
-                                    }
+                                } else {
+                                    iconFeature.set('bgId', 1);
                                 }
-                                iconSource.addFeature(iconFeature);
-                                iconFeatureList.push(iconFeature);
-                            });
+                                iconFeature.set('isInOwnRing', isInRing);
 
+                            } else if (item.identity == "协管人员") {
+                                let isInRing = Amap.GeometryUtil.isPointInRing(point, relateRegion);
+                                if (isInRing) {
+                                    iconFeature.set('bgId', 2);
+                                } else {
+                                    iconFeature.set('bgId', 3);
+                                }
+                                iconFeature.set('isInOwnRing', isInRing);
+                            }
+                            iconSource.addFeature(iconFeature);
+                            iconFeatureList.push(iconFeature);
 
                         }
                     }
@@ -234,20 +285,101 @@ export default {
             })
         }
 
-        const getPatrolInfo = id => {
-            return axios({
-                url: '/api/patrol/' + id,
-                method: 'get',
-                params: {
-                    id: id
-                }
-            }).then(function (resp) {
-                return resp.data.data;
-
-            })
+        //getPatrolsLocation();
 
 
-        }
+        // const getPatrolLocation = () => {
+        //     axios({
+        //         url: '/api/patrol-location',
+        //         method: 'get',
+        //     }).then(function (resp) {
+
+        //         if (resp.status == 200) {
+        //             for (const feature of iconFeatureList) {
+        //                 iconSource.removeFeature(feature);
+        //             }
+        //             iconFeatureList.splice(0, iconFeatureList.length);
+
+        //             for (const item of resp.data.data) {
+
+        //                 if (item.location != null && item.patrolId != null) {
+        //                     patrolLocation[item.id] = {
+        //                         id: item.id,
+        //                         patrolId: item.patrolId,
+        //                         location: stringToSingleLocation(item.location),
+        //                     }
+
+        //                     let point = stringToSingleLocation(item.location);
+        //                     let iconFeature = new Feature({
+        //                         geometry: new Point(point, "XY"),
+
+        //                     });
+
+        //                     let identity;
+        //                     let relateRegion;
+        //                     let name;
+        //                     let department;
+
+        //                     let telephone;
+        //                     getPatrolInfo(item.patrolId).then(res => {
+        //                         //console.log(res);
+        //                         name = res.name;
+        //                         identity = res.identity;
+        //                         department = res.department;
+        //                         telephone = res.telephone;
+        //                         relateRegion = polygonInfo[res.relatedRegion].markList;
+        //                         iconFeature.set('name', 'icon');
+        //                         iconFeature.set('polygonId', res.relatedRegion);
+        //                         iconFeature.set('patrolId', item.patrolId);
+        //                         iconFeature.set('patrolName', name);
+        //                         iconFeature.set('department', department);
+        //                         iconFeature.set('telephone', telephone);
+        //                         iconFeature.set('identity', identity);
+
+        //                         if (identity == "执法人员") {
+        //                             let isInRing = Amap.GeometryUtil.isPointInRing(point, relateRegion);
+        //                             if (isInRing) {
+        //                                 iconFeature.set('bgId', 0);
+
+        //                             } else {
+        //                                 iconFeature.set('bgId', 1);
+        //                             }
+        //                             iconFeature.set('isInOwnRing', isInRing);
+
+        //                         } else if (identity == "协管人员") {
+        //                             let isInRing = Amap.GeometryUtil.isPointInRing(point, relateRegion);
+        //                             if (isInRing) {
+        //                                 iconFeature.set('bgId', 2);
+        //                             } else {
+        //                                 iconFeature.set('bgId', 3);
+        //                             }
+        //                             iconFeature.set('isInOwnRing', isInRing);
+        //                         }
+        //                         iconSource.addFeature(iconFeature);
+        //                         iconFeatureList.push(iconFeature);
+        //                     });
+
+
+        //                 }
+        //             }
+        //         }
+        //     })
+        // }
+
+        // const getPatrolInfo = id => {
+        //     return axios({
+        //         url: '/api/patrol/' + id,
+        //         method: 'get',
+        //         params: {
+        //             id: id
+        //         }
+        //     }).then(function (resp) {
+        //         return resp.data.data;
+
+        //     })
+
+
+        // }
 
         const stringToSingleLocation = path => {
             let pathLng = path.replace("[", "").replace("]", "").split(",")[0] * 1;
@@ -260,8 +392,8 @@ export default {
         //         url: '/api/patrol-location',
         //         method: 'post',
         //         data: {
-        //             location: "[104.05098852802954, 30.688377297524777]",
-        //             patrolId: 20,
+        //             location: "[104.01098852802954, 30.657377297524777]",
+        //             patrolId: 99,
         //         }
         //     }).then(function (resp) {
         //         console.log(resp);
@@ -270,7 +402,7 @@ export default {
         // }
 
 
-        //postPatrolLocation();
+        // postPatrolLocation();
 
 
         function getReverseLayer(layer) {
@@ -398,41 +530,88 @@ export default {
                         content.appendChild(editTime);
                         popup.setPosition(coordinate);
                     } else if (featureId == 'icon') {
-                        content.innerHTML = "";
 
-                        let polygonId = feature.get('polygonId');
-                        let name = document.createElement("p");
-                        name.innerText = "所属围栏: " + polygonInfo[polygonId].name;
-                        content.appendChild(name);
+                        checkWorkStatistics(feature);
 
-                        let operator = document.createElement("p");
-                        operator.innerText = "操作人: " + feature.get('patrolId');
-                        content.appendChild(operator);
+                        // content.innerHTML = "";
 
-                        popup.setPosition(coordinate);
+                        // let name = document.createElement("p");
+                        // name.innerText = "姓名: " + feature.get('patrolName');
+                        // content.appendChild(name);
+
+                        // let department = document.createElement("p");
+                        // department.innerText = "单位: " + feature.get('department');
+                        // content.appendChild(department);
+
+                        // let identity = document.createElement("p");
+                        // identity.innerText = "人员类别: " + feature.get('identity');
+                        // content.appendChild(identity);
+
+                        // let telephone = document.createElement("p");
+                        // telephone.innerText = "电话: " + feature.get('telephone');
+                        // content.appendChild(telephone);
+
+                        // let isInOwnRing = document.createElement("p");
+                        // let isIn = feature.get('isInOwnRing') == true ? '是' : '否';
+                        // isInOwnRing.innerText = "是否在本人辖区: " + isIn;
+                        // content.appendChild(isInOwnRing);
+
+                        // let onWorkStatistics = document.createElement("p");
+                        // //onWorkStatistics.innerText = "在岗统计: ";
+                        // onWorkStatistics.innerHTML = "在岗统计:" + '<button type="button" class="btn btn-outline-primary btn-sm" id="' + feature.get('patrolId') + '">查看信息</button>'
+                        // content.appendChild(onWorkStatistics);
+
+                        // popup.setPosition(coordinate);
+
+                        // let btn = document.getElementById(feature.get('patrolId'));
+                        // console.log(btn);
+                        // btn.addEventListener('click', checkWorkStatistics(feature.get('patrolId')), true);
                     }
                 }
             });
         };
 
-        // const createIconOverlayClick = () => {
-        //     let coordinate = e.coordinate;
-        //         let feature = map.forEachFeatureAtPixel(e.pixel, function (feature) {
-        //             return feature;
-        //         });
-        //     if (feature) {
-        //         let featureId = feature.get('name');
-        //         if (featureId == 'icon') {
-        //             content.innerHTML = "";
+        const disabledDate = (time) => {
+            return time.getTime() > Date.now()
+        }
 
-        //                 let polygonId = feature.get('polygonId');
-        //                 let name = document.createElement("p");
-        //                 name.innerText = "围栏名: " + polygonInfo[polygonId].name;
+        let patrolWorkStatistics = reactive([]);
+        let workStat = reactive([]);
+        let selectPatrolId = ref('');
+        const checkWorkStatistics = (feature) => {
+            ifShowWorkStatistics.value = true;
+            const date = new Date();
+            const currentDay = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
+            value1.value = currentDay;
 
-        //                 popup.setPosition(coordinate);
-        //         }
-        //     }
-        // }
+            selectPatrolId.value = feature.get('patrolId');
+
+            patrolWorkStatistics.splice(0, patrolWorkStatistics.length);
+            workStat.splice(0, workStat.length);
+
+            patrolWorkStatistics.push({
+                name: feature.get('patrolName'),
+                department: feature.get('department'),
+                identity: feature.get('identity'),
+                telephone: feature.get('telephone'),
+                isInOwnRing: feature.get('isInOwnRing') == true ? '是' : '否'
+            })
+
+            workStat.push({
+                name: feature.get('patrolName'),
+                status: "在岗",
+                onWorkTime: "2022-10-14 8:13:5",
+                offWorkTime: "2022-10-14 17:40:00",
+            })
+            //ifShowWorkStatistics.value = true;
+        }
+
+        const dateChange = () => {
+            const date2 = new Date(value1.value);
+            const currentDate = date2.toLocaleDateString().replaceAll('/', '-');
+            console.log(currentDate);
+            console.log(selectPatrolId.value);
+        }
 
         let num = 0;
         const createPolygonFeature = (markerList) => {
@@ -463,58 +642,37 @@ export default {
             return oltarget;
         }
 
-        // const sortMarker = (markerList) => {
-        //     let geometryPoints = [];
-        //     let maxXPointIdx = 0;
-        //     for (let i = 0; i < markerList.length; i++) {
-        //         let gp = {
-        //             X: markerList[i][0],
-        //             Y: markerList[i][1],
-        //             slope: null,
-        //         };
-        //         geometryPoints.push(gp);
-        //         if (geometryPoints[maxXPointIdx].X < gp.X) {
-        //             maxXPointIdx = i;
-        //         }
-        //         else if (geometryPoints[maxXPointIdx].X == gp.X && geometryPoints[maxXPointIdx].Y > gp.Y) {
-        //             maxXPointIdx = i;
-        //         }
-        //     }
-        //     for (let i = 0; i < markerList.length; i++) {
-        //         if (i == maxXPointIdx) {
-        //             geometryPoints[i].slope = 1000000000;
-        //         }
-        //         else {
-        //             geometryPoints[i].slope = (geometryPoints[i].Y - geometryPoints[maxXPointIdx].Y) / (geometryPoints[i].X - geometryPoints[maxXPointIdx].X);
-        //         }
-        //     }
-        //     geometryPoints.sort(function (a, b) {
-        //         if (a.slope < b.slope) {
-        //             return 1;
-        //         }
-        //         else {
-        //             return -1;
-        //         }
-        //     });
-        //     for (let i in geometryPoints) {
-        //         markerList[i] = [geometryPoints[i].X, geometryPoints[i].Y];
-        //     }
-        // };
-
         onMounted(() => {
             initMap();
             refresh_polygonInfo();
 
-            setInterval(getPatrolLocation, 60000);
+            setInterval(getPatrolsLocation, 60000);
         });
 
-        return {};
+        return {
+            checkWorkStatistics,
+            disabledDate,
+            dateChange,
+            ifShowWorkStatistics,
+            patrolWorkStatistics,
+            workStat,
+            locale,
+            value1,
+        };
     },
     components: { MapContent }
 };
 </script>
   
 <style scoped>
+.dialog-title {
+    font-size: 18px;
+    font-weight: 1000;
+    color: "#303133";
+    margin-bottom: 1vh;
+    margin-left: 16vw;
+}
+
 .map {
     width: 100vw;
     height: 100vh;

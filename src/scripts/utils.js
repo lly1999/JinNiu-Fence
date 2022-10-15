@@ -105,6 +105,45 @@ const sortPoint = function (pointList) {
     return res;
 }
 
+
+// const sortMarker = (markerList) => {
+//     let geometryPoints = [];
+//     let maxXPointIdx = 0;
+//     for (let i = 0; i < markerList.length; i++) {
+//         let gp = {
+//             X: markerList[i][0],
+//             Y: markerList[i][1],
+//             slope: null,
+//         };
+//         geometryPoints.push(gp);
+//         if (geometryPoints[maxXPointIdx].X < gp.X) {
+//             maxXPointIdx = i;
+//         }
+//         else if (geometryPoints[maxXPointIdx].X == gp.X && geometryPoints[maxXPointIdx].Y > gp.Y) {
+//             maxXPointIdx = i;
+//         }
+//     }
+//     for (let i = 0; i < markerList.length; i++) {
+//         if (i == maxXPointIdx) {
+//             geometryPoints[i].slope = 1000000000;
+//         }
+//         else {
+//             geometryPoints[i].slope = (geometryPoints[i].Y - geometryPoints[maxXPointIdx].Y) / (geometryPoints[i].X - geometryPoints[maxXPointIdx].X);
+//         }
+//     }
+//     geometryPoints.sort(function (a, b) {
+//         if (a.slope < b.slope) {
+//             return 1;
+//         }
+//         else {
+//             return -1;
+//         }
+//     });
+//     for (let i in geometryPoints) {
+//         markerList[i] = [geometryPoints[i].X, geometryPoints[i].Y];
+//     }
+// };
+
 export {
     stringToList,
     getStandardTime,
