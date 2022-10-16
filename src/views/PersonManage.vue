@@ -31,16 +31,19 @@
                             :empty-text="ifShowQueryResult? '未找到该人员': 'Loading...'">
                             <!-- <el-table-column prop="id" label="id" width="150" /> -->
                             <el-table-column prop="name" label="姓名" width="120" header-align="center" align="center" />
-                            <el-table-column prop="identity" label="职务" width="120" header-align="center"
+                            <el-table-column prop="title" label="职务" width="180" header-align="center" align="center" />
+
+                            <el-table-column prop="department" label="部门" width="120" header-align="center"
+                                align="center" />
+                            <el-table-column prop="telephone" label="电话" width="160" header-align="center"
+                                align="center" />
+                            <el-table-column prop="identity" label="人员类型" width="120" header-align="center"
                                 align="center" />
                             <el-table-column prop="regionName" label="所处围栏" width="120" header-align="center"
                                 align="center" />
-                            <el-table-column prop="department" label="部门" width="120" header-align="center"
-                                align="center" />
                             <el-table-column prop="task" label="任务" width="160" header-align="center" align="center" />
-                            <el-table-column prop="telephone" label="电话" width="160" header-align="center"
-                                align="center" />
-                            <el-table-column prop="wechat" label="微信" width="200" header-align="center"
+
+                            <el-table-column prop="wechat" label="微信" width="160" header-align="center"
                                 align="center" />
 
 
@@ -114,16 +117,21 @@
                             :value="polygon.id" />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="职务" :rules="rules.title" prop="office">
+
+                <el-form-item label="人员职务" width="100px" :rules="rules.title" prop="title">
+                    <el-input v-model="form.title" />
+                </el-form-item>
+                <el-form-item label="部门" :rules="rules.department" prop="department">
+                    <el-input v-model="form.department" />
+                </el-form-item>
+                <el-form-item label="人员类型" prop="office">
                     <!-- <el-input v-model="form.office" /> -->
                     <el-radio-group v-model="form.office" class="ml-4">
                         <el-radio label="执法人员">执法人员</el-radio>
                         <el-radio label="协管人员">协管人员</el-radio>
                     </el-radio-group>
                 </el-form-item>
-                <el-form-item label="部门" :rules="rules.street" prop="department">
-                    <el-input v-model="form.department" />
-                </el-form-item>
+
 
                 <el-form-item label="手机号" :rules="rules.tel" prop="phone">
                     <el-input v-model="form.phone" />
@@ -184,7 +192,11 @@
                             :value="polygon.id" />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="职务" :rules="rules.title" prop="office">
+
+                <el-form-item label="人员职务" width="100px" :rules="rules.title" prop="title">
+                    <el-input v-model="form.title" />
+                </el-form-item>
+                <el-form-item label="人员类型" prop="office">
                     <!-- <el-select v-model="form.office" placeholder="选择职务">
                         <el-option label="执法人员" value="执法人员" />
                         <el-option label="协管人员" value="协管人员" />
@@ -194,7 +206,7 @@
                         <el-radio label="协管人员">协管人员</el-radio>
                     </el-radio-group>
                 </el-form-item>
-                <el-form-item label="部门" :rules="rules.street" prop="department">
+                <el-form-item label="部门" :rules="rules.department" prop="department">
                     <el-input v-model="form.department" />
                 </el-form-item>
                 <el-form-item label="手机号" :rules="rules.tel" prop="phone">
@@ -257,6 +269,20 @@ export default {
                     trigger: 'blur',
                 },
             ],
+            department: [
+                {
+                    required: true,
+                    message: '请输入部门',
+                    trigger: 'blur',
+                },
+            ],
+            identity: [
+                {
+                    required: true,
+                    message: '请输入人员类别',
+                    trigger: 'blur',
+                },
+            ],
 
             street: [
                 {
@@ -285,6 +311,7 @@ export default {
         const form = reactive({
             id: '',
             name: '',
+            title: '',
             fenceName: '',
             office: ref(''),
             department: '',
@@ -383,6 +410,7 @@ export default {
                         method: 'post',
                         data: {
                             name: form.name,
+                            title: form.title,
                             relatedRegion: form.fenceName,
                             identity: form.office,
                             department: form.department,
@@ -416,6 +444,7 @@ export default {
             form.phone = patrolInfo[editId].telephone;
             form.wechat = patrolInfo[editId].wechat;
             form.office = patrolInfo[editId].identity;
+            form.title = patrolInfo[editId].title;
             if (patrolInfo[editId].regionName == "暂未分配") {
                 form.fenceName = "";
             } else {
@@ -439,6 +468,7 @@ export default {
             formE1.resetFields();
             form.id = '';
             form.name = '';
+            form.title = '';
             form.phone = '';
             form.wechat = '';
             form.office = '';
@@ -459,6 +489,7 @@ export default {
                         method: 'post',
                         data: {
                             id: patrols.value[index].id,
+                            title: form.title,
                             name: form.name,
                             relatedRegion: form.fenceName,
                             identity: form.office,
@@ -528,6 +559,7 @@ export default {
                             let patrol = {
                                 id: item.id,
                                 name: item.name,
+                                title: item.title,
                                 department: item.department,
                                 relatedRegion: relatedRegion,
                                 regionName: regionName,
@@ -592,6 +624,7 @@ export default {
                     let patrol = {
                         id: item.id,
                         name: item.name,
+                        title: item.title,
                         department: item.department,
                         relatedRegion: relatedRegion,
                         regionName: regionName,
