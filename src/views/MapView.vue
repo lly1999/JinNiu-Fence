@@ -226,7 +226,7 @@ export default {
         let iconFeatureList = reactive([]);
         const getPatrolsLocation = () => {
             axios({
-                url: '/api/patrolWholeInfoController',
+                url: '/api/patrol-whole-info',
                 method: 'get',
             }).then(function (resp) {
                 if (resp.status == 200) {
