@@ -142,7 +142,7 @@
                 <el-form-item label="手机号" :rules="rules.tel" prop="phone">
                     <el-input v-model="form.phone" />
                 </el-form-item>
-                <el-form-item label="微信号" :rules="rules.vx" prop="wechat">
+                <el-form-item label="微信号" prop="wechat">
                     <el-input v-model="form.wechat" />
                 </el-form-item>
                 <el-form-item label="任务负责" prop="task">
@@ -218,7 +218,7 @@
                 <el-form-item label="手机号" :rules="rules.tel" prop="phone">
                     <el-input v-model="form.phone" />
                 </el-form-item>
-                <el-form-item label="微信号" :rules="rules.vx" prop="wechat">
+                <el-form-item label="微信号" prop="wechat">
                     <el-input v-model="form.wechat" />
                 </el-form-item>
                 <el-form-item label="任务负责" prop="task">
@@ -506,7 +506,7 @@ export default {
                         }
                     }).then(function () {
                         initPatrolList();
-                        pull_page(current_page);
+                        pull_page(current_page.value);
                     })
 
                 }
@@ -523,7 +523,7 @@ export default {
                 }
             }).then(function () {
                 initPatrolList();
-                pull_page(current_page);
+                pull_page(current_page.value);
 
             })
 
