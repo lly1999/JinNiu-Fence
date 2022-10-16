@@ -312,62 +312,62 @@ export default {
                         }
                     }
                 }
-                getPatrolList();
+                //getPatrolList();
             })
         }
         initPatrolList();
 
         let patrolInfo = reactive({});
         let patrolList = reactive([]);
-        const getPatrolList = () => {
+        // const getPatrolList = () => {
 
-            Object.keys(patrolInfo).map(key => {
-                delete patrolInfo[key]
-            });
-            patrolList.splice(0, patrolList.length);
+        //     Object.keys(patrolInfo).map(key => {
+        //         delete patrolInfo[key]
+        //     });
+        //     patrolList.splice(0, patrolList.length);
 
-            axios({
-                url: '/api/patrol',
-                method: 'get'
-            }).then(function (resp) {
+        //     axios({
+        //         url: '/api/patrol',
+        //         method: 'get'
+        //     }).then(function (resp) {
 
-                if (resp.status == 200) {
-                    for (let item of resp.data.data) {
-                        let relatedRegion;
-                        let regionName;
+        //         if (resp.status == 200) {
+        //             for (let item of resp.data.data) {
+        //                 let relatedRegion;
+        //                 let regionName;
 
-                        if (item.relatedRegion == null) {
-                            relatedRegion = "暂未分配";
-                            regionName = "暂未分配";
-                        } else {
-                            relatedRegion = item.relatedRegion;
-                            regionName = polygons[relatedRegion]["name"];
-                        }
+        //                 if (item.relatedRegion == null) {
+        //                     relatedRegion = "暂未分配";
+        //                     regionName = "暂未分配";
+        //                 } else {
+        //                     relatedRegion = item.relatedRegion;
+        //                     regionName = polygons[relatedRegion]["name"];
+        //                 }
 
-                        let task;
-                        if (item.task == null) {
-                            task = "暂无";
-                        } else {
-                            task = item.task;
-                        }
+        //                 let task;
+        //                 if (item.task == null) {
+        //                     task = "暂无";
+        //                 } else {
+        //                     task = item.task;
+        //                 }
 
-                        let patrol = {
-                            id: item.id,
-                            name: item.name,
-                            department: item.department,
-                            relatedRegion: relatedRegion,
-                            regionName: regionName,
-                            telephone: item.telephone,
-                            wechat: item.wechat,
-                            identity: item.identity,
-                            task: task,
-                        }
-                        patrolInfo[item.id] = patrol;
-                        patrolList.push(patrol);
-                    }
-                }
-            })
-        }
+        //                 let patrol = {
+        //                     id: item.id,
+        //                     name: item.name,
+        //                     department: item.department,
+        //                     relatedRegion: relatedRegion,
+        //                     regionName: regionName,
+        //                     telephone: item.telephone,
+        //                     wechat: item.wechat,
+        //                     identity: item.identity,
+        //                     task: task,
+        //                 }
+        //                 patrolInfo[item.id] = patrol;
+        //                 patrolList.push(patrol);
+        //             }
+        //         }
+        //     })
+        // }
 
         const addPerson = () => {
             addPersonDialogVisible.value = true;
@@ -392,8 +392,8 @@ export default {
                         }
 
                     }).then(function () {
-
                         initPatrolList();
+                        pull_page(current_page);
                     })
 
                 }
@@ -408,7 +408,7 @@ export default {
         let editIndex;
         const editInfo = (index) => {
 
-            let editId = patrolList[index].id;
+            let editId = patrols.value[index].id;
             editIndex = index;
 
             form.id = patrolInfo[editId].id;
@@ -419,7 +419,7 @@ export default {
             if (patrolInfo[editId].regionName == "暂未分配") {
                 form.fenceName = "";
             } else {
-                form.fenceName = patrolInfo[editId].regionName;
+                form.fenceName = patrolInfo[editId].relatedRegion;
             }
 
             if (patrolInfo[editId].task == "暂无") {
@@ -444,6 +444,7 @@ export default {
             form.office = '';
             form.fenceName = '';
             form.department = '';
+            form.task = '';
         }
 
         const confirmEdit = (formEl) => {
@@ -452,11 +453,12 @@ export default {
                     editInfoDialogVisible.value = false;
                     let index = editIndex;
 
+
                     axios({
                         url: "/api/patrol",
                         method: 'post',
                         data: {
-                            id: patrolList[index].id,
+                            id: patrols.value[index].id,
                             name: form.name,
                             relatedRegion: form.fenceName,
                             identity: form.office,
@@ -467,6 +469,7 @@ export default {
                         }
                     }).then(function () {
                         initPatrolList();
+                        pull_page(current_page);
                     })
 
                 }
@@ -474,7 +477,7 @@ export default {
         }
 
         const removePerson = (index) => {
-            let removeId = patrolList[index].id;
+            let removeId = patrols.value[index].id;
             axios({
                 url: '/api/patrol/' + removeId,
                 method: 'delete',
@@ -482,8 +485,9 @@ export default {
                     id: removeId,
                 }
             }).then(function () {
-
                 initPatrolList();
+                pull_page(current_page);
+
             })
 
         }
@@ -595,6 +599,7 @@ export default {
                         identity: item.identity,
                         task: task,
                     }
+                    patrolInfo[item.id] = patrol;
                     patrols.value.push(patrol);
                 }
                 // patrols.value = resp.data.data.records;
