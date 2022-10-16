@@ -65,8 +65,8 @@
                                         <el-image class="logo-icon" :src="require('@/assets/img/wx_icon.png')"
                                             :size="35"></el-image>
                                     </el-button>
-                                    <el-button link size="small" type="danger" plain text style="font-size:14px"
-                                        @click="removePerson(scope.$index)">删除
+                                    <el-button class="allocationFench" link size="small" type="danger" plain text
+                                        style="font-size:14px" @click="removePerson(scope.$index)">删除
                                     </el-button>
                                 </template>
                             </el-table-column>
@@ -506,6 +506,7 @@ export default {
                 }).then(function (resp) {
                     if (resp.status == 200) {
                         for (let item of resp.data.data) {
+
                             let relatedRegion;
                             let regionName;
 
@@ -518,7 +519,7 @@ export default {
                             }
 
                             let task;
-                            if (item.task == null) {
+                            if (item.task == null || item.task == '') {
                                 task = "暂无";
                             } else {
                                 task = item.task;
