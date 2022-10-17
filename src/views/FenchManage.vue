@@ -502,14 +502,14 @@ export default {
                             name: fenceInfo.value.name,
                             creator: fenceInfo.value.operator,
                             createTime: getTTime(new Date().toISOString()),
-                            pointList: JSON.stringify(markerList),
+                            pointList: JSON.stringify(sortPoint(markerList)),
                         }
                     } else {
                         newPolygon = {
                             name: fenceInfo.value.name,
                             creator: fenceInfo.value.operator,
                             createTime: getTTime(new Date().toISOString()),
-                            pointList: JSON.stringify(markerList),
+                            pointList: JSON.stringify(sortPoint(markerList)),
                         }
                     }
 

@@ -27,24 +27,27 @@
                     </div>
                     <div class="card-body">
                         <el-table :data="ifShowQueryResult ? queryResultList: patrols"
-                            style="width: 100%; font-size: 18px;" size="large"
+                            style="width: 100%; font-size: 18px;" size="large" max-height="700"
                             :empty-text="ifShowQueryResult? '未找到该人员': 'Loading...'">
                             <!-- <el-table-column prop="id" label="id" width="150" /> -->
-                            <el-table-column prop="name" label="姓名" width="120" header-align="center" align="center" />
-                            <el-table-column prop="identity" label="职务" width="120" header-align="center"
+                            <el-table-column prop="name" label="姓名" width="140" header-align="center" align="center" />
+                            <el-table-column prop="title" label="职务" width="220" header-align="center" align="center" />
+
+                            <el-table-column prop="department" label="部门" width="240" header-align="center"
+                                align="center" />
+                            <el-table-column prop="telephone" label="电话" width="160" header-align="center"
+                                align="center" />
+                            <el-table-column prop="identity" label="人员类型" width="120" header-align="center"
                                 align="center" />
                             <el-table-column prop="regionName" label="所处围栏" width="120" header-align="center"
                                 align="center" />
-                            <el-table-column prop="department" label="部门" width="120" header-align="center"
-                                align="center" />
-                            <el-table-column prop="task" label="任务" width="160" header-align="center" align="center" />
-                            <el-table-column prop="telephone" label="电话" width="160" header-align="center"
-                                align="center" />
-                            <el-table-column prop="wechat" label="微信" width="200" header-align="center"
+                            <el-table-column prop="task" label="任务" width="100" header-align="center" align="center" />
+
+                            <el-table-column prop="wechat" label="微信" width="150" header-align="center"
                                 align="center" />
 
 
-                            <el-table-column fixed="right" label="操作" width="280" header-align="center" align="center">
+                            <el-table-column fixed="right" label="操作" width="250" header-align="center" align="center">
                                 <template #default="scope">
                                     <el-button class="allocateFench" link size="small" type="primary" plain text
                                         style="font-size:14px;" @click="editInfo(scope.$index)">
@@ -71,7 +74,7 @@
                                 </template>
                             </el-table-column>
                         </el-table>
-                        <nav v-if="!ifShowQueryResult" aria-label="...">
+                        <!-- <nav v-if="!ifShowQueryResult" aria-label="...">
                             <ul class="pagination" style="float: right; margin-top: 20px;">
                                 <li class="page-item" @click="click_page(-2)">
                                     <a class="page-link" href="#">前一页</a>
@@ -85,11 +88,17 @@
                                     <a class="page-link" href="#">后一页</a>
                                 </li>
                             </ul>
-                        </nav>
+                        </nav> -->
+                        <!-- :page-count="page_count" @size-change="size_change"
+                            @current-change="pull_page" -->
+                        <!-- :current-page="current_page" -->
 
-                        <!-- <div class="example-pagination-block">
-                            <el-pagination layout="prev, pager, next" :total="3" :page-size="2" />
-                        </div> -->
+                        <div class="float-end" style="margin-top: 10px">
+                            <el-pagination background layout="total, prev, pager, next, jumper" :total="total_records"
+                                :current-page="current_page" @current-change="pull_page" />
+                        </div>
+
+
                     </div>
 
 
@@ -114,21 +123,26 @@
                             :value="polygon.id" />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="职务" :rules="rules.title" prop="office">
+
+                <el-form-item label="人员职务" width="100px" :rules="rules.title" prop="title">
+                    <el-input v-model="form.title" />
+                </el-form-item>
+                <el-form-item label="部门" :rules="rules.department" prop="department">
+                    <el-input v-model="form.department" />
+                </el-form-item>
+                <el-form-item label="人员类型" prop="office">
                     <!-- <el-input v-model="form.office" /> -->
                     <el-radio-group v-model="form.office" class="ml-4">
                         <el-radio label="执法人员">执法人员</el-radio>
                         <el-radio label="协管人员">协管人员</el-radio>
                     </el-radio-group>
                 </el-form-item>
-                <el-form-item label="部门" :rules="rules.street" prop="department">
-                    <el-input v-model="form.department" />
-                </el-form-item>
+
 
                 <el-form-item label="手机号" :rules="rules.tel" prop="phone">
                     <el-input v-model="form.phone" />
                 </el-form-item>
-                <el-form-item label="微信号" :rules="rules.vx" prop="wechat">
+                <el-form-item label="微信号" prop="wechat">
                     <el-input v-model="form.wechat" />
                 </el-form-item>
                 <el-form-item label="任务负责" prop="task">
@@ -184,7 +198,11 @@
                             :value="polygon.id" />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="职务" :rules="rules.title" prop="office">
+
+                <el-form-item label="人员职务" width="100px" :rules="rules.title" prop="title">
+                    <el-input v-model="form.title" />
+                </el-form-item>
+                <el-form-item label="人员类型" prop="office">
                     <!-- <el-select v-model="form.office" placeholder="选择职务">
                         <el-option label="执法人员" value="执法人员" />
                         <el-option label="协管人员" value="协管人员" />
@@ -194,13 +212,13 @@
                         <el-radio label="协管人员">协管人员</el-radio>
                     </el-radio-group>
                 </el-form-item>
-                <el-form-item label="部门" :rules="rules.street" prop="department">
+                <el-form-item label="部门" :rules="rules.department" prop="department">
                     <el-input v-model="form.department" />
                 </el-form-item>
                 <el-form-item label="手机号" :rules="rules.tel" prop="phone">
                     <el-input v-model="form.phone" />
                 </el-form-item>
-                <el-form-item label="微信号" :rules="rules.vx" prop="wechat">
+                <el-form-item label="微信号" prop="wechat">
                     <el-input v-model="form.wechat" />
                 </el-form-item>
                 <el-form-item label="任务负责" prop="task">
@@ -257,6 +275,20 @@ export default {
                     trigger: 'blur',
                 },
             ],
+            department: [
+                {
+                    required: true,
+                    message: '请输入部门',
+                    trigger: 'blur',
+                },
+            ],
+            identity: [
+                {
+                    required: true,
+                    message: '请输入人员类别',
+                    trigger: 'blur',
+                },
+            ],
 
             street: [
                 {
@@ -285,6 +317,7 @@ export default {
         const form = reactive({
             id: '',
             name: '',
+            title: '',
             fenceName: '',
             office: ref(''),
             department: '',
@@ -383,6 +416,7 @@ export default {
                         method: 'post',
                         data: {
                             name: form.name,
+                            title: form.title,
                             relatedRegion: form.fenceName,
                             identity: form.office,
                             department: form.department,
@@ -416,6 +450,7 @@ export default {
             form.phone = patrolInfo[editId].telephone;
             form.wechat = patrolInfo[editId].wechat;
             form.office = patrolInfo[editId].identity;
+            form.title = patrolInfo[editId].title;
             if (patrolInfo[editId].regionName == "暂未分配") {
                 form.fenceName = "";
             } else {
@@ -439,6 +474,7 @@ export default {
             formE1.resetFields();
             form.id = '';
             form.name = '';
+            form.title = '';
             form.phone = '';
             form.wechat = '';
             form.office = '';
@@ -459,6 +495,7 @@ export default {
                         method: 'post',
                         data: {
                             id: patrols.value[index].id,
+                            title: form.title,
                             name: form.name,
                             relatedRegion: form.fenceName,
                             identity: form.office,
@@ -469,7 +506,7 @@ export default {
                         }
                     }).then(function () {
                         initPatrolList();
-                        pull_page(current_page);
+                        pull_page(current_page.value);
                     })
 
                 }
@@ -486,7 +523,7 @@ export default {
                 }
             }).then(function () {
                 initPatrolList();
-                pull_page(current_page);
+                pull_page(current_page.value);
 
             })
 
@@ -528,6 +565,7 @@ export default {
                             let patrol = {
                                 id: item.id,
                                 name: item.name,
+                                title: item.title,
                                 department: item.department,
                                 relatedRegion: relatedRegion,
                                 regionName: regionName,
@@ -552,13 +590,14 @@ export default {
             // initPatrolList();
         }
 
-        let total_records = 0;
-        let current_page = 1;
+        let total_records = ref(0);
+        let current_page = ref(1);
         let pages = ref([]);
         let patrols = ref([]);
         let pageNum = 10;
+        let page_count = 0;
         const pull_page = page => {
-            current_page = page;
+            current_page.value = page;
             axios({
                 url: '/api/patrol/page',
                 method: 'get',
@@ -567,8 +606,11 @@ export default {
                     pageSize: pageNum,
                 }
             }).then(function (resp) {
+
                 patrols.value.splice(0, patrols.value.length);
-                total_records = resp.data.data.total;
+                total_records.value = parseInt(resp.data.data.total);
+                page_count = parseInt(resp.data.data.pages);
+
 
                 for (let item of resp.data.data.records) {
                     let relatedRegion;
@@ -592,6 +634,7 @@ export default {
                     let patrol = {
                         id: item.id,
                         name: item.name,
+                        title: item.title,
                         department: item.department,
                         relatedRegion: relatedRegion,
                         regionName: regionName,
@@ -604,34 +647,38 @@ export default {
                     patrols.value.push(patrol);
                 }
                 // patrols.value = resp.data.data.records;
-                update_pages();
+                //update_pages();
             })
         }
 
-        const update_pages = () => {
-            let max_pages = parseInt(Math.ceil(total_records / pageNum));
-            let new_pages = [];
-            for (let i = current_page - 2; i <= current_page + 2; i++) {
-                if (i >= 1 && i <= max_pages) {
-                    new_pages.push({
-                        number: i,
-                        is_active: i === current_page ? "active" : "",
-                    });
-                }
-            }
-            pages.value = new_pages;
-        }
+        // const update_pages = () => {
+        //     let max_pages = parseInt(Math.ceil(total_records / pageNum));
+        //     let new_pages = [];
+        //     for (let i = current_page - 2; i <= current_page + 2; i++) {
+        //         if (i >= 1 && i <= max_pages) {
+        //             new_pages.push({
+        //                 number: i,
+        //                 is_active: i === current_page ? "active" : "",
+        //             });
+        //         }
+        //     }
+        //     pages.value = new_pages;
+        // }
 
-        const click_page = page => {
-            if (page === -2) page = current_page - 1;
-            else if (page === -1) page = current_page + 1;
-            let max_pages = parseInt(Math.ceil(total_records / pageNum));
+        // const click_page = page => {
+        //     if (page === -2) page = current_page - 1;
+        //     else if (page === -1) page = current_page + 1;
+        //     let max_pages = parseInt(Math.ceil(total_records / pageNum));
 
-            if (page >= 1 && page <= max_pages) {
-                pull_page(page);
-            }
+        //     if (page >= 1 && page <= max_pages) {
+        //         pull_page(page);
+        //     }
+        // }
+
+        const size_change = page => {
+            console.log(page);
         }
-        pull_page(current_page);
+        pull_page(current_page.value);
 
         return {
             editInfo,
@@ -643,7 +690,9 @@ export default {
             removePerson,
             searchPatrol,
             backToFirstPage,
-            click_page,
+            //click_page,
+            pull_page,
+            size_change,
             rules,
             form,
             dialogFormVisible,
@@ -658,6 +707,9 @@ export default {
             queryResultList,
             pages,
             patrols,
+            total_records,
+            current_page,
+            page_count
         }
     },
     components: {
