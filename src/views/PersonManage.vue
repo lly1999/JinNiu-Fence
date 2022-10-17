@@ -441,10 +441,14 @@ export default {
 
         let editIndex;
         const editInfo = (index) => {
-
-            let editId = patrols.value[index].id;
-            editIndex = index;
-
+            let editId
+            if (ifShowQueryResult.value == true) {
+                editId = queryResultList[index].id;
+                editIndex = index;
+            } else {
+                editId = patrols.value[index].id;
+                editIndex = index;
+            }
             form.id = patrolInfo[editId].id;
             form.name = patrolInfo[editId].name;
             form.phone = patrolInfo[editId].telephone;
@@ -463,7 +467,6 @@ export default {
                 form.task = patrolInfo[editId].task;
             }
             form.department = patrolInfo[editId].department;
-
             editInfoDialogVisible.value = true;
         }
 
@@ -514,7 +517,13 @@ export default {
         }
 
         const removePerson = (index) => {
-            let removeId = patrols.value[index].id;
+            let removeId;
+            if (ifShowQueryResult.value == true) {
+                removeId = queryResultList[index].id;
+            } else {
+                removeId = patrols.value[index].id;
+            }
+
             axios({
                 url: '/api/patrol/' + removeId,
                 method: 'delete',
@@ -531,6 +540,10 @@ export default {
 
         let queryResultList = reactive([])
         const searchPatrol = () => {
+            Object.keys(patrolInfo).map(key => {
+                delete patrolInfo[key]
+            });
+            queryResultList.splice(0, queryResultList.length);
 
             queryName.value = queryName.value.trim();
             if (queryName.value != "") {
@@ -576,6 +589,7 @@ export default {
                             }
 
                             queryResultList.push(patrol);
+                            patrolInfo[item.id] = patrol;
                         }
                     }
                     ifShowQueryResult.value = true;
@@ -588,6 +602,7 @@ export default {
         const backToFirstPage = () => {
             ifShowQueryResult.value = false;
             // initPatrolList();
+            pull_page(current_page.value);
         }
 
         let total_records = ref(0);
@@ -597,6 +612,10 @@ export default {
         let pageNum = 10;
         let page_count = 0;
         const pull_page = page => {
+
+            Object.keys(patrolInfo).map(key => {
+                delete patrolInfo[key]
+            });
             current_page.value = page;
             axios({
                 url: '/api/patrol/page',
@@ -648,6 +667,7 @@ export default {
                 }
                 // patrols.value = resp.data.data.records;
                 //update_pages();
+                ifShowQueryResult.value = false;
             })
         }
 
