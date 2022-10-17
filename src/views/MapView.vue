@@ -218,9 +218,11 @@ export default {
                         feature: polygonFeature
                     }
                 }
+                getPatrolsLocation();
             })
         }
-
+        refresh_polygonInfo();
+        setInterval(refresh_polygonInfo, 60000);
 
         let patrolLocation = reactive({});
         let iconFeatureList = reactive([]);
@@ -236,7 +238,8 @@ export default {
                     iconFeatureList.splice(0, iconFeatureList.length);
 
                     for (const item of resp.data.data) {
-                        if (item.location != null && item.patrol_id != null) {
+
+                        if (item.location != null && item.patrol_id != null && item.relatedRegion != null) {
                             patrolLocation[item.patrol_id] = {
                                 patrolId: item.patrol_id,
                                 location: stringToSingleLocation(item.location),
@@ -644,9 +647,6 @@ export default {
 
         onMounted(() => {
             initMap();
-            refresh_polygonInfo();
-
-            setInterval(getPatrolsLocation, 60000);
         });
 
         return {
