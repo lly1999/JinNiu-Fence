@@ -78,9 +78,11 @@ import { Point } from "ol/geom";
 import AMapLoader from "@amap/amap-jsapi-loader"
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 
+import { useStore } from 'vuex';
+
 export default {
     setup() {
-
+        const store = useStore();
         const locale = zhCn;
         const value1 = ref('');
         let Amap;
@@ -198,8 +200,12 @@ export default {
             });
             axios({
                 url: "/api/region",
-                method: "get"
+                method: "get",
+                headers: {
+                    Authorization: store.state.user.tokenHeader + store.state.user.token,
+                }
             }).then(function (resp) {
+                num = 0;
                 for (const item of resp.data.data) {
                     let pointList = stringToList(item.pointList);
                     if (pointList.length < 3) continue;
@@ -230,6 +236,9 @@ export default {
             axios({
                 url: '/api/patrol-whole-info',
                 method: 'get',
+                headers: {
+                    Authorization: store.state.user.tokenHeader + store.state.user.token,
+                },
             }).then(function (resp) {
                 if (resp.status == 200) {
                     for (const feature of iconFeatureList) {

@@ -252,9 +252,11 @@ import { ref } from 'vue';
 import { PhoneFilled, Search } from "@element-plus/icons-vue";
 // import _ from 'lodash';
 import axios from 'axios';
+import { useStore } from 'vuex';
 
 export default {
     setup() {
+        const store = useStore();
         const dialogFormVisible = ref(false);
         const editInfoDialogVisible = ref(false);
         const addPersonDialogVisible = ref(false);
@@ -335,8 +337,12 @@ export default {
             });
             axios({
                 url: "/api/region",
-                method: "get"
+                method: "get",
+                headers: {
+                    Authorization: store.state.user.tokenHeader + store.state.user.token,
+                },
             }).then(function (resp) {
+
                 for (const item of resp.data.data) {
                     if (item.pointList.length >= 3) {
                         polygons[item.id] = {
@@ -414,6 +420,9 @@ export default {
                     axios({
                         url: "/api/patrol",
                         method: 'post',
+                        headers: {
+                            Authorization: store.state.user.tokenHeader + store.state.user.token,
+                        },
                         data: {
                             name: form.name,
                             title: form.title,
@@ -496,6 +505,9 @@ export default {
                     axios({
                         url: "/api/patrol",
                         method: 'post',
+                        headers: {
+                            Authorization: store.state.user.tokenHeader + store.state.user.token,
+                        },
                         data: {
                             id: patrols.value[index].id,
                             title: form.title,
@@ -527,6 +539,9 @@ export default {
             axios({
                 url: '/api/patrol/' + removeId,
                 method: 'delete',
+                headers: {
+                    Authorization: store.state.user.tokenHeader + store.state.user.token,
+                },
                 params: {
                     id: removeId,
                 }
@@ -550,6 +565,9 @@ export default {
                 axios({
                     url: '/api/patrol/name/' + queryName.value,
                     method: 'get',
+                    headers: {
+                        Authorization: store.state.user.tokenHeader + store.state.user.token,
+                    },
                     params: {
                         name: queryName.value
                     }
@@ -620,12 +638,15 @@ export default {
             axios({
                 url: '/api/patrol/page',
                 method: 'get',
+                headers: {
+                    Authorization: store.state.user.tokenHeader + store.state.user.token,
+                },
                 params: {
                     pageNum: page,
                     pageSize: pageNum,
                 }
             }).then(function (resp) {
-
+                console.log(resp);
                 patrols.value.splice(0, patrols.value.length);
                 total_records.value = parseInt(resp.data.data.total);
                 page_count = parseInt(resp.data.data.pages);

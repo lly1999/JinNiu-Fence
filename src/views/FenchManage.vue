@@ -127,11 +127,12 @@ import 'element-plus/theme-chalk/el-message.css';
 import axios from 'axios'
 import { stringToList, getStandardTime, getTTime, sortPoint } from '../scripts/utils'
 import { jinNiuFencePath } from '../scripts/constant'
+import { useStore } from 'vuex';
 
 export default {
 
     setup() {
-
+        const store = useStore();
         let map = null;
         const addFenceVisiable = ref(false);
 
@@ -257,7 +258,10 @@ export default {
             });
             axios({
                 url: "/api/region",
-                method: "get"
+                method: "get",
+                headers: {
+                    Authorization: store.state.user.tokenHeader + store.state.user.token,
+                },
             }).then(function (resp) {
                 num = 0;
                 for (const item of resp.data.data) {
@@ -516,7 +520,9 @@ export default {
                     axios({
                         url: "/api/region",
                         method: "post",
-
+                        headers: {
+                            Authorization: store.state.user.tokenHeader + store.state.user.token,
+                        },
                         data: newPolygon,
                     }).then(function (resp) {
                         if (resp.status == 200) {
@@ -659,7 +665,10 @@ export default {
                 method: 'delete',
                 params: {
                     id: deleteFence,
-                }
+                },
+                headers: {
+                    Authorization: store.state.user.tokenHeader + store.state.user.token,
+                },
             }).then(function (resp) {
                 console.log(resp);
             })
