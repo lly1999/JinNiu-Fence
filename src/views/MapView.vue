@@ -72,15 +72,17 @@ import { Polygon } from "ol/geom";
 import ImageLayer from "ol/layer/Image";
 import MapContent from "@/components/MapContent.vue";
 import axios from "axios";
-import { stringToList, getStandardTime, sortPoint } from '../scripts/utils'
-import { jinNiuFencePath } from '../scripts/constant'
+import { stringToList, getStandardTime } from '../scripts/utils'
+import { banshichu } from '../scripts/constant'
 import { Point } from "ol/geom";
 import AMapLoader from "@amap/amap-jsapi-loader"
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 
+import { useStore } from 'vuex';
+
 export default {
     setup() {
-
+        const store = useStore();
         const locale = zhCn;
         const value1 = ref('');
         let Amap;
@@ -169,24 +171,43 @@ export default {
             createPolygonLayer();
             createIconLayer();
 
-            for (const path of jinNiuFencePath) {
-                const tmp = new Polygon(path);
+            // for (const path of jinNiuFencePath) {
+            //     const tmp = new Polygon(path);
+            //     let oltarget = new Feature(tmp);
+            //     oltarget.set('name', 'jinNiu');
+            //     oltarget.setStyle(
+            //         new Style({
+            //             fill: new Fill({ color: 'rgba(135, 206, 255, 0.5)' }),
+            //             stroke: new Stroke({
+            //                 lineDash: [10, 10, 10, 10],
+            //                 // color: "#4e98f444",
+            //                 // color: '#2b8cbe',
+            //                 color: "red",
+            //                 width: 1,
+            //             })
+            //         })
+            //     );
+            //     polygonSource.addFeature(oltarget);
+            // }
+
+            for (const item of banshichu) {
+                const tmp = new Polygon(item.path);
                 let oltarget = new Feature(tmp);
-                oltarget.set('name', 'jinNiu');
+                oltarget.set('name', 'banshichu');
+                oltarget.set('banshichuName', item.name);
                 oltarget.setStyle(
                     new Style({
-                        fill: new Fill({ color: 'rgba(135, 206, 255, 0.5)' }),
+                        fill: new Fill({ color: item.color }),
                         stroke: new Stroke({
+                            color: item.strokeColor,
                             lineDash: [10, 10, 10, 10],
-                            // color: "#4e98f444",
-                            // color: '#2b8cbe',
-                            color: "red",
-                            width: 1,
+                            width: 1
                         })
                     })
                 );
                 polygonSource.addFeature(oltarget);
             }
+
         };
 
 
@@ -198,13 +219,17 @@ export default {
             });
             axios({
                 url: "/api/region",
-                method: "get"
+                method: "get",
+                headers: {
+                    Authorization: store.state.user.tokenHeader + store.state.user.token,
+                }
             }).then(function (resp) {
+                num = 0;
                 for (const item of resp.data.data) {
                     let pointList = stringToList(item.pointList);
                     if (pointList.length < 3) continue;
 
-                    pointList = sortPoint(pointList);
+                    // pointList = sortPoint(pointList);
                     let polygonFeature = createPolygonFeature(pointList);
                     polygonFeature.set('name', item.id);
                     polygonSource.addFeature(polygonFeature);
@@ -230,6 +255,9 @@ export default {
             axios({
                 url: '/api/patrol-whole-info',
                 method: 'get',
+                headers: {
+                    Authorization: store.state.user.tokenHeader + store.state.user.token,
+                },
             }).then(function (resp) {
                 if (resp.status == 200) {
                     for (const feature of iconFeatureList) {
@@ -518,7 +546,7 @@ export default {
                 if (feature) {
 
                     let featureId = feature.get('name');
-                    if (featureId != "jinNiu" && featureId != 'icon') {
+                    if (featureId != "jinNiu" && featureId != 'icon' && featureId != 'banshichu') {
 
                         content.innerHTML = "";
 
@@ -533,42 +561,13 @@ export default {
                         content.appendChild(editTime);
                         popup.setPosition(coordinate);
                     } else if (featureId == 'icon') {
-
                         checkWorkStatistics(feature);
-
-                        // content.innerHTML = "";
-
-                        // let name = document.createElement("p");
-                        // name.innerText = "姓名: " + feature.get('patrolName');
-                        // content.appendChild(name);
-
-                        // let department = document.createElement("p");
-                        // department.innerText = "单位: " + feature.get('department');
-                        // content.appendChild(department);
-
-                        // let identity = document.createElement("p");
-                        // identity.innerText = "人员类别: " + feature.get('identity');
-                        // content.appendChild(identity);
-
-                        // let telephone = document.createElement("p");
-                        // telephone.innerText = "电话: " + feature.get('telephone');
-                        // content.appendChild(telephone);
-
-                        // let isInOwnRing = document.createElement("p");
-                        // let isIn = feature.get('isInOwnRing') == true ? '是' : '否';
-                        // isInOwnRing.innerText = "是否在本人辖区: " + isIn;
-                        // content.appendChild(isInOwnRing);
-
-                        // let onWorkStatistics = document.createElement("p");
-                        // //onWorkStatistics.innerText = "在岗统计: ";
-                        // onWorkStatistics.innerHTML = "在岗统计:" + '<button type="button" class="btn btn-outline-primary btn-sm" id="' + feature.get('patrolId') + '">查看信息</button>'
-                        // content.appendChild(onWorkStatistics);
-
-                        // popup.setPosition(coordinate);
-
-                        // let btn = document.getElementById(feature.get('patrolId'));
-                        // console.log(btn);
-                        // btn.addEventListener('click', checkWorkStatistics(feature.get('patrolId')), true);
+                    } else if (featureId == 'banshichu') {
+                        content.innerHTML = "";
+                        let name = document.createElement("p");
+                        name.innerText = "办事处名: " + feature.get('banshichuName');
+                        content.appendChild(name);
+                        popup.setPosition(coordinate);
                     }
                 }
             });
@@ -618,7 +617,7 @@ export default {
 
         let num = 0;
         const createPolygonFeature = (markerList) => {
-            const color = ['rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)', 'rgba(255, 0, 0, 0.5)', 'rgbs(255, 255, 0, 0.5)'];
+            const color = ['rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)', 'rgba(255, 0, 0, 0.5)', 'rgba(255, 255, 0, 0.5)', 'rgba(255,0,255, 0.5)'];
             let oltarget;
 
             if (markerList.length < 3) {
@@ -632,7 +631,7 @@ export default {
             oltarget = new Feature(tmp);
             oltarget.setStyle(
                 new Style({
-                    fill: new Fill({ color: color[num % 4] }),
+                    fill: new Fill({ color: color[num % 5] }),
                     stroke: new Stroke({
                         lineDash: [10, 10, 10, 10],
                         // color: "#4e98f444",

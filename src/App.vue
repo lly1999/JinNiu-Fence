@@ -1,5 +1,5 @@
 <template>
-  <NavBar />
+  <NavBar v-if="$store.state.user.is_login" />
   <router-view />
 </template>
 

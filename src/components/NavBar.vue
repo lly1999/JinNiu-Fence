@@ -25,25 +25,34 @@
                             :to="{ name: 'checkin_index' }">签到考勤</router-link>
                     </li>
                 </ul>
-                <ul class="navbar-nav">
+                <!-- <ul class="navbar-nav">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
                             用户名
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown" style="z-index: 999;">
                             <li>
-                                <!-- <router-link class="dropdown-item" :to="{ name: 'user_bot_index' }">我的Bot</router-link> -->
+                             
                                 <a class="dropdown-item" href="#">Features</a>
                             </li>
 
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            <li><a class="dropdown-item" href="#">退出</a></li>
+                            <li><a class="dropdown-item" href="#" @click="logout">退出</a></li>
                         </ul>
                     </li>
 
+                </ul> -->
+
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">{{ $store.state.user.username }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" @click="logout">登出</a>
+                    </li>
                 </ul>
 
                 <!-- <ul class="navbar-nav">
@@ -62,14 +71,21 @@
 <script>
 import { useRoute } from 'vue-router'
 import { computed } from 'vue';
+import { useStore } from 'vuex';
 
 export default {
     setup() {
+        const store = useStore();
         const route = useRoute();
         let route_name = computed(() => route.name)
 
+        const logout = () => {
+            store.dispatch("logout");
+        }
+
         return {
             route_name,
+            logout,
         }
     }
 }
