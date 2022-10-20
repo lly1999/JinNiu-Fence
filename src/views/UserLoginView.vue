@@ -65,7 +65,14 @@ export default {
         if (jwt_token && tokenHead) {
             store.commit("updateToken", jwt_token);
             store.commit("updateTokenHeader", tokenHead);
-            store.commit("updateIsLogin", true);
+            store.dispatch("getInfo", {
+                success() {
+                    router.push({ name: "home" });
+                },
+                error() {
+                    console.log("获取用户出错");
+                }
+            })
             router.push({ name: 'home' });
         }
 
@@ -74,8 +81,15 @@ export default {
                 username: params.username,
                 password: params.password,
                 success() {
-                    store.commit("updateIsLogin", true);
-                    router.push({ name: "home" });
+                    store.dispatch("getInfo", {
+                        success() {
+                            router.push({ name: "home" });
+                        },
+                        error() {
+                            console.log("获取用户出错");
+                        }
+                    });
+
                 }
             })
         }

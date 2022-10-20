@@ -9,9 +9,6 @@ export default {
         is_login: false,
     },
     mutations: {
-        updateIsLogin(state, is_login) {
-            state.is_login = is_login;
-        },
         updateUser(state, user) {
             state.id = user.id;
             state.username = user.username;
@@ -52,6 +49,29 @@ export default {
                 }
             })
         },
+        getInfo(context, data) {
+            axios({
+                url: '/api/info',
+                method: 'get',
+                headers: {
+                    Authorization: context.state.tokenHeader + context.state.token,
+                },
+            }).then(function (resp) {
+                if (resp.data.data.error_message == "success") {
+                    context.commit("updateUser", {
+                        id: resp.data.data.id,
+                        roleId: resp.data.data.roleId,
+                        username: resp.data.data.username,
+                        telephone: resp.data.data.telephone,
+                        is_login: true,
+                    });
+                    data.success(resp.status);
+                } else {
+                    data.error(resp.status);
+                }
+            })
+        },
+
         logout(context) {
             localStorage.removeItem("jwt_token");
             localStorage.removeItem("jwt_tokenHeader");

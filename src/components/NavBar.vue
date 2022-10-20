@@ -48,7 +48,7 @@
 
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" href="#">用户名</a>
+                        <a class="nav-link" href="#">{{ $store.state.user.username }}</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#" @click="logout">登出</a>

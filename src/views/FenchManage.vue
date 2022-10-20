@@ -125,8 +125,8 @@ import { Polygon } from "ol/geom";
 import { ElMessage } from 'element-plus';
 import 'element-plus/theme-chalk/el-message.css';
 import axios from 'axios'
-import { stringToList, getStandardTime, getTTime, sortPoint } from '../scripts/utils'
-import { jinNiuFencePath } from '../scripts/constant'
+import { stringToList, getStandardTime, getTTime } from '../scripts/utils'
+import { banshichu } from '../scripts/constant'
 import { useStore } from 'vuex';
 
 export default {
@@ -219,18 +219,36 @@ export default {
             createIconLayer();
             createPolygonLayer();
 
-            for (const path of jinNiuFencePath) {
-                const tmp = new Polygon(path);
-                let oltarget = new Feature(tmp);
-                oltarget.set('name', 'jinNiu');
-                oltarget.setStyle(
+            // for (const path of jinNiuFencePath) {
+            //     const tmp = new Polygon(path);
+            //     let oltarget = new Feature(tmp);
+            //     oltarget.set('name', 'jinNiu');
+            //     oltarget.setStyle(
 
+            //         new Style({
+            //             fill: new Fill({ color: 'rgba(255, 236, 139, 0.5)' }),
+            //             stroke: new Stroke({
+            //                 lineDash: [10, 10, 10, 10],
+            //                 color: "red",
+            //                 width: 1,
+            //             })
+            //         })
+            //     );
+            //     polygonSource.addFeature(oltarget);
+            // }
+
+            for (const item of banshichu) {
+                const tmp = new Polygon(item.path);
+                let oltarget = new Feature(tmp);
+                oltarget.set('name', 'banshichu');
+                oltarget.set("banshichuName", item.name);
+                oltarget.setStyle(
                     new Style({
                         fill: new Fill({ color: 'rgba(255, 236, 139, 0.5)' }),
                         stroke: new Stroke({
+                            color: item.strokeColor,
                             lineDash: [10, 10, 10, 10],
-                            color: "red",
-                            width: 1,
+                            width: 1
                         })
                     })
                 );
@@ -342,7 +360,7 @@ export default {
                     content.innerHTML = '';
 
                     let featureId = feature.get('name');
-                    if (featureId != "jinNiu") {
+                    if (featureId != "jinNiu" && featureId != "banshichu") {
                         let name = document.createElement('p');
                         name.innerText = '围栏名: ' + polygonInfo[featureId].name;
                         content.appendChild(name);
@@ -355,6 +373,12 @@ export default {
                         editTime.innerText = '编辑时间: ' + polygonInfo[featureId].editTime;
                         content.appendChild(editTime);
 
+                        popup.setPosition(coordinate);
+                    } else if (featureId == "banshichu") {
+                        content.innerHTML = "";
+                        let name = document.createElement("p");
+                        name.innerText = "办事处名: " + feature.get('banshichuName');
+                        content.appendChild(name);
                         popup.setPosition(coordinate);
                     }
 
@@ -370,12 +394,12 @@ export default {
                 });
 
                 if (feature) {
-                    if (feature.get('name').substring(0, 4) == 'icon') {
+                    if (feature.get('name') == 'icon') {
 
-                        delete markerInfo[feature.get('name')];
+                        delete markerInfo[feature.get('iconName')];
                         iconSource.removeFeature(feature);
                         preview();
-                    } else if (feature.get('name') == 'jinNiu') {
+                    } else {
                         clickHandler(e);
                     }
 
@@ -421,7 +445,8 @@ export default {
                 geometry: new Point(point, "XY")
             });
 
-            iconFeature.set('name', 'icon' + markId);
+            iconFeature.set('name', 'icon');
+            iconFeature.set('iconName', markId);
             markId++;
 
             iconSource.addFeature(iconFeature);
@@ -433,11 +458,11 @@ export default {
 
             iconTranslate.on('translateend', () => {
                 let clickPoint = iconFeature.getGeometry().flatCoordinates;
-                markerInfo[iconFeature.get('name')].point = clickPoint;
+                markerInfo[iconFeature.get('iconName')].point = clickPoint;
                 preview();
             })
 
-            markerInfo[iconFeature.get('name')] = {
+            markerInfo[iconFeature.get('iconName')] = {
                 point: point,
                 feature: iconFeature
             };
@@ -447,7 +472,7 @@ export default {
 
         let num = 0;
         const createPolygonFeature = (markerList) => {
-            const color = ['rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)', 'rgba(255, 0, 0, 0.5)', 'rgbs(255, 255, 0, 0.5)'];
+            const color = ['rgba(0, 255, 0, 0.5)', 'rgba(0, 0, 255, 0.5)', 'rgba(255, 0, 0, 0.5)', 'rgba(255, 255, 0, 0.5)', 'rgba(255,0,255, 0.5)'];
             let oltarget;
 
             if (markerList.length < 3) {
@@ -455,14 +480,14 @@ export default {
             }
             // sortMarker(markerList);
             // console.log(sortPoint(markerList));
-            markerList = sortPoint(markerList);
+            //markerList = sortPoint(markerList);
             markerList.push(markerList[0])
 
             const tmp = new Polygon([markerList]);
             oltarget = new Feature(tmp);
             oltarget.setStyle(
                 new Style({
-                    fill: new Fill({ color: color[num % 4] }),
+                    fill: new Fill({ color: color[num % 5] }),
                     stroke: new Stroke({
                         lineDash: [10, 10, 10, 10],
                         color: "#4e98f444",
@@ -506,14 +531,14 @@ export default {
                             name: fenceInfo.value.name,
                             creator: fenceInfo.value.operator,
                             createTime: getTTime(new Date().toISOString()),
-                            pointList: JSON.stringify(sortPoint(markerList)),
+                            pointList: JSON.stringify(markerList),
                         }
                     } else {
                         newPolygon = {
                             name: fenceInfo.value.name,
                             creator: fenceInfo.value.operator,
                             createTime: getTTime(new Date().toISOString()),
-                            pointList: JSON.stringify(sortPoint(markerList)),
+                            pointList: JSON.stringify(markerList),
                         }
                     }
 
@@ -590,17 +615,18 @@ export default {
                     let iconTranslate = new Translate({
                         features: new Collection([iconFeature])
                     });
-                    iconFeature.set('name', 'icon' + markId);
+                    iconFeature.set('name', 'icon');
+                    iconFeature.set('iconName', markId);
                     markId++;
                     map.addInteraction(iconTranslate);
 
                     iconTranslate.on('translateend', () => {
                         let clickPoint = iconFeature.getGeometry().flatCoordinates;
-                        markerInfo[iconFeature.get('name')].point = clickPoint;
+                        markerInfo[iconFeature.get('iconName')].point = clickPoint;
                         preview();
                     })
 
-                    markerInfo[iconFeature.get('name')] = {
+                    markerInfo[iconFeature.get('iconName')] = {
                         point: point,
                         feature: iconFeature
                     };

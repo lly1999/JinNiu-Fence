@@ -646,7 +646,7 @@ export default {
                     pageSize: pageNum,
                 }
             }).then(function (resp) {
-                console.log(resp);
+
                 patrols.value.splice(0, patrols.value.length);
                 total_records.value = parseInt(resp.data.data.total);
                 page_count = parseInt(resp.data.data.pages);
